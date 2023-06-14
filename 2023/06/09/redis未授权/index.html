@@ -2,9 +2,9 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
-<meta name="theme-color" content="#222">
-<meta name="generator" content="Hexo 6.3.0">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
@@ -13,14 +13,13 @@
 <link rel="stylesheet" href="/css/main.css">
 
 
-<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
 
-<script id="hexo-configurations">
-    var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
-  </script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
 
-  <meta name="description" content="redis未授权什么是redisRedis是现在最受欢迎的NoSQL数据库之一，Redis是一个使用ANSI C编写的开源、包含多种数据结构、支持网络、基于内存、可选持久性的键值对存储数据库，其具备如下特性：  基于内存运行，性能高效 支持分布式，理论上可以无限扩展 key-value存储系统 开源的使用ANSI C语言编写、遵守BSD协议、支持网络、可基于内存亦可持久化的日志型、Key-Valu">
+<script class="next-config" data-name="main" type="application/json">{"hostname":"example.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.17.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="redis未授权什么是redisRedis是现在最受欢迎的NoSQL数据库之一，Redis是一个使用ANSI C编写的开源、包含多种数据结构、支持网络、基于内存、可选持久性的键值对存储数据库，其具备如下特性：  基于内存运行，性能高效 支持分布式，理论上可以无限扩展 key-value存储系统 开源的使用ANSI C语言编写、遵守BSD协议、支持网络、可基于内存亦可持久化的日志型、Key-Valu">
 <meta property="og:type" content="article">
 <meta property="og:title" content="redis未授权">
 <meta property="og:url" content="http://example.com/2023/06/09/redis%E6%9C%AA%E6%8E%88%E6%9D%83/index.html">
@@ -56,21 +55,18 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/redis/redis-server%E6%9C%AA%E6%8E%88%E6%9D%83%E5%BC%80%E5%90%AF%E6%9C%8D%E5%8A%A1.png">
 
+
 <link rel="canonical" href="http://example.com/2023/06/09/redis%E6%9C%AA%E6%8E%88%E6%9D%83/">
 
 
-<script id="page-configurations">
-  // https://hexo.io/docs/variables.html
-  CONFIG.page = {
-    sidebar: "",
-    isHome : false,
-    isPost : true,
-    lang   : 'zh-CN'
-  };
-</script>
 
-  <title>redis未授权 | liberator</title>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"http://example.com/2023/06/09/redis%E6%9C%AA%E6%8E%88%E6%9D%83/","path":"2023/06/09/redis未授权/","title":"redis未授权"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>redis未授权 | liberator</title>
   
+
+
 
 
 
@@ -78,145 +74,195 @@
 
 
   <noscript>
-  <style>
-  .use-motion .brand,
-  .use-motion .menu-item,
-  .sidebar-inner,
-  .use-motion .post-block,
-  .use-motion .pagination,
-  .use-motion .comments,
-  .use-motion .post-header,
-  .use-motion .post-body,
-  .use-motion .collection-header { opacity: initial; }
-
-  .use-motion .site-title,
-  .use-motion .site-subtitle {
-    opacity: initial;
-    top: initial;
-  }
-
-  .use-motion .logo-line-before i { left: initial; }
-  .use-motion .logo-line-after i { right: initial; }
-  </style>
-</noscript>
-
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
 </head>
 
-<body itemscope itemtype="http://schema.org/WebPage">
-  <div class="container use-motion">
-    <div class="headband"></div>
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
 
-    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
-      <div class="header-inner"><div class="site-brand-container">
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
   <div class="site-nav-toggle">
-    <div class="toggle" aria-label="切换导航栏">
-      <span class="toggle-line toggle-line-first"></span>
-      <span class="toggle-line toggle-line-middle"></span>
-      <span class="toggle-line toggle-line-last"></span>
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
     </div>
   </div>
 
   <div class="site-meta">
 
     <a href="/" class="brand" rel="start">
-      <span class="logo-line-before"><i></i></span>
-      <h1 class="site-title">liberator</h1>
-      <span class="logo-line-after"><i></i></span>
+      <i class="logo-line"></i>
+      <p class="site-title">liberator</p>
+      <i class="logo-line"></i>
     </a>
       <p class="site-subtitle" itemprop="description">天底下没有这样的道理，你不喜欢我，才是正常的</p>
   </div>
 
   <div class="site-nav-right">
-    <div class="toggle popup-trigger">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
     </div>
   </div>
 </div>
 
 
 
-
 <nav class="site-nav">
-  <ul id="menu" class="main-menu menu">
-        <li class="menu-item menu-item-home">
-
-    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
-
-  </li>
-        <li class="menu-item menu-item-archives">
-
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
-
-  </li>
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-link"><a href="/links/" rel="section"><i class="fa fa-link fa-fw"></i>友链</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
   </ul>
 </nav>
 
 
 
-
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
 </div>
-    </header>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
 
-    
-  <div class="back-to-top">
-    <i class="fa fa-arrow-up"></i>
-    <span>0%</span>
+    </div>
   </div>
 
+</header>
+        
+  
+  <aside class="sidebar">
 
-    <main class="main">
-      <div class="main-inner">
-        <div class="content-wrap">
-          
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
 
-          <div class="content post posts-expand">
-            
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#redis%E6%9C%AA%E6%8E%88%E6%9D%83"><span class="nav-number">1.</span> <span class="nav-text">redis未授权</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFredis"><span class="nav-number">1.1.</span> <span class="nav-text">什么是redis</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#redis%E6%9C%AA%E6%8E%88%E6%9D%83%E6%BC%8F%E6%B4%9E%E5%8E%9F%E7%90%86"><span class="nav-number">1.2.</span> <span class="nav-text">redis未授权漏洞原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#redis%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0"><span class="nav-number">1.3.</span> <span class="nav-text">redis漏洞复现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#kali%E5%AE%89%E8%A3%85redis"><span class="nav-number">1.3.1.</span> <span class="nav-text">kali安装redis</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#windows%E5%AE%89%E8%A3%85redis"><span class="nav-number">1.3.2.</span> <span class="nav-text">windows安装redis</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A9%E7%94%A8redis%E5%86%99webshell"><span class="nav-number">1.3.3.</span> <span class="nav-text">利用redis写webshell</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%A9%E7%94%A8%E5%89%8D%E6%8F%90%EF%BC%9A"><span class="nav-number">1.3.3.1.</span> <span class="nav-text">利用前提：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BC%80%E5%A7%8B%E5%A4%8D%E7%8E%B0%EF%BC%9A"><span class="nav-number">1.3.3.2.</span> <span class="nav-text">开始复现：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A9%E7%94%A8redis%E8%BF%9B%E8%A1%8Cssh%E5%AF%86%E9%92%A5%E8%BF%9E%E6%8E%A5"><span class="nav-number">1.3.4.</span> <span class="nav-text">利用redis进行ssh密钥连接</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ssh%E5%AF%86%E9%92%A5%E8%BF%9E%E6%8E%A5"><span class="nav-number">1.3.4.1.</span> <span class="nav-text">ssh密钥连接:</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%A9%E7%94%A8%E5%89%8D%E6%8F%90%EF%BC%9A-1"><span class="nav-number">1.3.4.2.</span> <span class="nav-text">利用前提：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BC%80%E5%A7%8B%E5%A4%8D%E7%8E%B0%EF%BC%9A-1"><span class="nav-number">1.3.4.3.</span> <span class="nav-text">开始复现：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A9%E7%94%A8crontab%E5%8F%8D%E5%BC%B9shell"><span class="nav-number">1.3.5.</span> <span class="nav-text">利用crontab反弹shell</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFcrontab"><span class="nav-number">1.3.5.1.</span> <span class="nav-text">什么是crontab</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#windows%E4%B8%8B%E4%B8%8B%E8%BD%BDncat%E5%91%BD%E4%BB%A4"><span class="nav-number">1.3.5.2.</span> <span class="nav-text">windows下下载ncat命令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3"><span class="nav-number">1.3.5.3.</span> <span class="nav-text">问题解决</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6"><span class="nav-number">1.3.6.</span> <span class="nav-text">主从复制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%86%E8%A7%A3%E4%BB%80%E4%B9%88%E6%98%AF%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6"><span class="nav-number">1.3.6.1.</span> <span class="nav-text">了解什么是主从复制</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%8F%8D%E5%BC%B9shell"><span class="nav-number">1.3.6.2.</span> <span class="nav-text">主从复制反弹shell</span></a></li></ol></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="liberator"
+      src="/images/touxiang.jpg">
+  <p class="site-author-name" itemprop="name">liberator</p>
+  <div class="site-description" itemprop="description">君子坐而论道，少年起而行之</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">4</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+
+        </div>
+      </div>
+    </div>
 
     
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2023/06/09/redis%E6%9C%AA%E6%8E%88%E6%9D%83/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="image" content="/images/touxiang.jpg">
       <meta itemprop="name" content="liberator">
-      <meta itemprop="description" content="君子坐而论道，少年起而行之">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="liberator">
+      <meta itemprop="description" content="君子坐而论道，少年起而行之">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="redis未授权 | liberator">
+      <meta itemprop="description" content="">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
           redis未授权
         </h1>
 
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
 
-              <time title="创建时间：2023-06-09 17:26:27 / 修改时间：17:30:51" itemprop="dateCreated datePublished" datetime="2023-06-09T17:26:27+08:00">2023-06-09</time>
-            </span>
+      <time title="创建时间：2023-06-09 17:26:27 / 修改时间：17:30:51" itemprop="dateCreated datePublished" datetime="2023-06-09T17:26:27+08:00">2023-06-09</time>
+    </span>
 
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>6.1k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>11 分钟</span>
-            </span>
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>6.1k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>11 分钟</span>
+    </span>
+</div>
 
         </div>
       </header>
@@ -224,10 +270,7 @@
     
     
     
-    <div class="post-body" itemprop="articleBody">
-
-      
-        <h1 id="redis未授权"><a href="#redis未授权" class="headerlink" title="redis未授权"></a>redis未授权</h1><h2 id="什么是redis"><a href="#什么是redis" class="headerlink" title="什么是redis"></a>什么是redis</h2><p>Redis是现在最受欢迎的NoSQL数据库之一，Redis是一个使用ANSI C编写的开源、包含多种数据结构、支持网络、基于内存、可选持久性的键值对存储数据库，其具备如下特性：</p>
+    <div class="post-body" itemprop="articleBody"><h1 id="redis未授权"><a href="#redis未授权" class="headerlink" title="redis未授权"></a>redis未授权</h1><h2 id="什么是redis"><a href="#什么是redis" class="headerlink" title="什么是redis"></a>什么是redis</h2><p>Redis是现在最受欢迎的NoSQL数据库之一，Redis是一个使用ANSI C编写的开源、包含多种数据结构、支持网络、基于内存、可选持久性的键值对存储数据库，其具备如下特性：</p>
 <ul>
 <li>基于内存运行，性能高效</li>
 <li>支持分布式，理论上可以无限扩展</li>
@@ -314,7 +357,7 @@
 <p>在这里输入你自己生成的私钥即可</p>
 <p><strong>注意：</strong></p>
 <p><strong>1.如果你是linux系统使用cat,是windows系统使用type.</strong></p>
-<p><strong>2.如果你是windows那你利用ssh密钥连接运行ssh -i id_rsa <a href="mailto:&#114;&#x6f;&#x6f;&#x74;&#x40;&#49;&#57;&#x32;&#46;&#49;&#54;&#x38;&#46;&#52;&#51;&#46;&#49;&#x34;&#49;">&#114;&#x6f;&#x6f;&#x74;&#x40;&#49;&#57;&#x32;&#46;&#49;&#54;&#x38;&#46;&#52;&#51;&#46;&#49;&#x34;&#49;</a>需要在.ssh目录下，因为权限问题。</strong></p>
+<p><strong>2.如果你是windows那你利用ssh密钥连接运行ssh -i id_rsa <a href="mailto:&#114;&#111;&#x6f;&#x74;&#x40;&#49;&#57;&#50;&#x2e;&#x31;&#54;&#x38;&#46;&#x34;&#51;&#x2e;&#x31;&#52;&#x31;">&#114;&#111;&#x6f;&#x74;&#x40;&#49;&#57;&#50;&#x2e;&#x31;&#54;&#x38;&#46;&#x34;&#51;&#x2e;&#x31;&#52;&#x31;</a>需要在.ssh目录下，因为权限问题。</strong></p>
 <p><strong>3.你利用redis上传公钥时候运行代码是在你解压的redis文件下运行。</strong></p>
 <p><strong>4.文件名必须是authorized_keys,由配置文件决定的。</strong></p>
 <h3 id="利用crontab反弹shell"><a href="#利用crontab反弹shell" class="headerlink" title="利用crontab反弹shell"></a>利用crontab反弹shell</h3><h4 id="什么是crontab"><a href="#什么是crontab" class="headerlink" title="什么是crontab"></a>什么是crontab</h4><p>crontab 是一个在类 Unix 系统中定时执行任务的命令，它允许用户在指定的时间点或时间间隔内运行命令或脚本。通常情况下，crontab 命令用于自动化重复性任务，如备份、数据同步、清理日志等。</p>
@@ -377,177 +420,106 @@
     
     
 
-      <footer class="post-footer">
+    <footer class="post-footer">
 
         
 
-
-        
-    <div class="post-nav">
-      <div class="post-nav-item">
-    <a href="/2023/06/02/vulhub%E6%90%AD%E5%BB%BA/" rel="prev" title="vulhub搭建">
-      <i class="fa fa-chevron-left"></i> vulhub搭建
-    </a></div>
-      <div class="post-nav-item"></div>
-    </div>
-      </footer>
-    
-  </article>
-  
-  
-  
-
-
-
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2023/06/02/vulhub%E6%90%AD%E5%BB%BA/" rel="prev" title="vulhub搭建">
+                  <i class="fa fa-chevron-left"></i> vulhub搭建
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
           </div>
-          
-
-<script>
-  window.addEventListener('tabs:register', () => {
-    let { activeClass } = CONFIG.comments;
-    if (CONFIG.comments.storage) {
-      activeClass = localStorage.getItem('comments_active') || activeClass;
-    }
-    if (activeClass) {
-      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
-      if (activeTab) {
-        activeTab.click();
-      }
-    }
-  });
-  if (CONFIG.comments.storage) {
-    window.addEventListener('tabs:click', event => {
-      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
-      let commentClass = event.target.classList[1];
-      localStorage.setItem('comments_active', commentClass);
-    });
-  }
-</script>
-
-        </div>
-          
-  
-  <div class="toggle sidebar-toggle">
-    <span class="toggle-line toggle-line-first"></span>
-    <span class="toggle-line toggle-line-middle"></span>
-    <span class="toggle-line toggle-line-last"></span>
-  </div>
-
-  <aside class="sidebar">
-    <div class="sidebar-inner">
-
-      <ul class="sidebar-nav motion-element">
-        <li class="sidebar-nav-toc">
-          文章目录
-        </li>
-        <li class="sidebar-nav-overview">
-          站点概览
-        </li>
-      </ul>
-
-      <!--noindex-->
-      <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#redis%E6%9C%AA%E6%8E%88%E6%9D%83"><span class="nav-number">1.</span> <span class="nav-text">redis未授权</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFredis"><span class="nav-number">1.1.</span> <span class="nav-text">什么是redis</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#redis%E6%9C%AA%E6%8E%88%E6%9D%83%E6%BC%8F%E6%B4%9E%E5%8E%9F%E7%90%86"><span class="nav-number">1.2.</span> <span class="nav-text">redis未授权漏洞原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#redis%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0"><span class="nav-number">1.3.</span> <span class="nav-text">redis漏洞复现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#kali%E5%AE%89%E8%A3%85redis"><span class="nav-number">1.3.1.</span> <span class="nav-text">kali安装redis</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#windows%E5%AE%89%E8%A3%85redis"><span class="nav-number">1.3.2.</span> <span class="nav-text">windows安装redis</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A9%E7%94%A8redis%E5%86%99webshell"><span class="nav-number">1.3.3.</span> <span class="nav-text">利用redis写webshell</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%A9%E7%94%A8%E5%89%8D%E6%8F%90%EF%BC%9A"><span class="nav-number">1.3.3.1.</span> <span class="nav-text">利用前提：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BC%80%E5%A7%8B%E5%A4%8D%E7%8E%B0%EF%BC%9A"><span class="nav-number">1.3.3.2.</span> <span class="nav-text">开始复现：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A9%E7%94%A8redis%E8%BF%9B%E8%A1%8Cssh%E5%AF%86%E9%92%A5%E8%BF%9E%E6%8E%A5"><span class="nav-number">1.3.4.</span> <span class="nav-text">利用redis进行ssh密钥连接</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ssh%E5%AF%86%E9%92%A5%E8%BF%9E%E6%8E%A5"><span class="nav-number">1.3.4.1.</span> <span class="nav-text">ssh密钥连接:</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%A9%E7%94%A8%E5%89%8D%E6%8F%90%EF%BC%9A-1"><span class="nav-number">1.3.4.2.</span> <span class="nav-text">利用前提：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BC%80%E5%A7%8B%E5%A4%8D%E7%8E%B0%EF%BC%9A-1"><span class="nav-number">1.3.4.3.</span> <span class="nav-text">开始复现：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A9%E7%94%A8crontab%E5%8F%8D%E5%BC%B9shell"><span class="nav-number">1.3.5.</span> <span class="nav-text">利用crontab反弹shell</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFcrontab"><span class="nav-number">1.3.5.1.</span> <span class="nav-text">什么是crontab</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#windows%E4%B8%8B%E4%B8%8B%E8%BD%BDncat%E5%91%BD%E4%BB%A4"><span class="nav-number">1.3.5.2.</span> <span class="nav-text">windows下下载ncat命令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3"><span class="nav-number">1.3.5.3.</span> <span class="nav-text">问题解决</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6"><span class="nav-number">1.3.6.</span> <span class="nav-text">主从复制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%86%E8%A7%A3%E4%BB%80%E4%B9%88%E6%98%AF%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6"><span class="nav-number">1.3.6.1.</span> <span class="nav-text">了解什么是主从复制</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%8F%8D%E5%BC%B9shell"><span class="nav-number">1.3.6.2.</span> <span class="nav-text">主从复制反弹shell</span></a></li></ol></li></ol></li></ol></li></ol></div>
-      </div>
-      <!--/noindex-->
-
-      <div class="site-overview-wrap sidebar-panel">
-        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-  <p class="site-author-name" itemprop="name">liberator</p>
-  <div class="site-description" itemprop="description">君子坐而论道，少年起而行之</div>
-</div>
-<div class="site-state-wrap motion-element">
-  <nav class="site-state">
-      <div class="site-state-item site-state-posts">
-          <a href="/archives/">
-        
-          <span class="site-state-item-count">4</span>
-          <span class="site-state-item-name">日志</span>
-        </a>
-      </div>
-  </nav>
+    </footer>
+  </article>
 </div>
 
 
 
-      </div>
-
-    </div>
-  </aside>
-  <div id="sidebar-dimmer"></div>
 
 
-      </div>
-    </main>
 
-    <footer class="footer">
-      <div class="footer-inner">
-        
+</div>
+  </main>
 
-        
+  <footer class="footer">
+    <div class="footer-inner">
+
 
 <div class="copyright">
-  
   &copy; 
   <span itemprop="copyrightYear">2023</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
   <span class="author" itemprop="copyrightHolder">liberator</span>
-    <span class="post-meta-divider">|</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
     <span class="post-meta-item-icon">
-      <i class="fa fa-chart-area"></i>
+      <i class="fa fa-chart-line"></i>
     </span>
+      <span>站点总字数：</span>
     <span title="站点总字数">10k</span>
-    <span class="post-meta-divider">|</span>
+  </span>
+  <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
+      <span>站点阅读时长 &asymp;</span>
     <span title="站点阅读时长">18 分钟</span>
+  </span>
 </div>
-  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
   </div>
 
-        
+    </div>
+  </footer>
 
-
-
-
-
-
-
-
-      </div>
-    </footer>
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
   </div>
 
-  
-  <script src="/lib/anime.min.js"></script>
-  <script src="/lib/velocity/velocity.min.js"></script>
-  <script src="/lib/velocity/velocity.ui.min.js"></script>
-
-<script src="/js/utils.js"></script>
-
-<script src="/js/motion.js"></script>
-
-
-<script src="/js/schemes/muse.js"></script>
-
-
-<script src="/js/next-boot.js"></script>
-
-
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
 
 
   
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
 
-
-
-
-
-
-
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
 
 
 
@@ -556,8 +528,11 @@
 
 
   
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 
-  
+
+
+
 
 </body>
 </html>
