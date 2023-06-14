@@ -19,6 +19,61 @@
 ]]></content>
   </entry>
   <entry>
+    <title>vulhub搭建</title>
+    <url>/2023/06/02/vulhub%E6%90%AD%E5%BB%BA/</url>
+    <content><![CDATA[<h1 id="vulhub靶场搭建及使用"><a href="#vulhub靶场搭建及使用" class="headerlink" title="vulhub靶场搭建及使用"></a>vulhub靶场搭建及使用</h1><h2 id="1-进行系统更新"><a href="#1-进行系统更新" class="headerlink" title="1.进行系统更新"></a>1.进行系统更新</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sudo su			             进入超级用户</span><br><span class="line">apt-get update                更新系统，防止后面安装时报错</span><br><span class="line">apt-get upgrade               更新软件包</span><br><span class="line">apt-get dist-upgrade          更新系统版本。如果你对新版本软件的需求不是那么迫切，可以不执行</span><br></pre></td></tr></table></figure>
+
+<p>这几步几乎每次都会用，很常见，就不放图片了</p>
+<h2 id="2-安装https协议及AC证书"><a href="#2-安装https协议及AC证书" class="headerlink" title="2.安装https协议及AC证书"></a>2.安装https协议及AC证书</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">apt-get install -y apt-transport-https ca-certificates</span><br></pre></td></tr></table></figure>
+
+<p><img src="/vulhub/vulhub%E5%AE%89%E8%A3%85%E8%AF%81%E4%B9%A6.png"></p>
+<h2 id="3-下载安装docker"><a href="#3-下载安装docker" class="headerlink" title="3.下载安装docker"></a>3.下载安装docker</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">apt install docker.io</span><br></pre></td></tr></table></figure>
+
+<p><img src="/vulhub/vulhub%E5%AE%89%E8%A3%85docker.png"></p>
+<h2 id="4-查看docker安装是否成功"><a href="#4-查看docker安装是否成功" class="headerlink" title="4.查看docker安装是否成功"></a>4.查看docker安装是否成功</h2><p>Docker自带一个hello-world环境，我们可以启动这个环境，测试docker功能是否正常</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker run hello-world </span><br></pre></td></tr></table></figure>
+
+<p><img src="/vulhub/vulhub%E9%AA%8C%E8%AF%81docker%E6%98%AF%E5%90%A6%E5%AE%89%E8%A3%85%E6%88%90%E5%8A%9F.png"></p>
+<h2 id="5-查看docker的各项基本信息"><a href="#5-查看docker的各项基本信息" class="headerlink" title="5.查看docker的各项基本信息"></a>5.查看docker的各项基本信息</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#查看Docker版本</span><br><span class="line">docker -v </span><br><span class="line">#启动docker环境</span><br><span class="line">systemctl start docker</span><br><span class="line">#显示所有的容器，包括未运行的容器</span><br><span class="line">docker ps -a</span><br><span class="line">#显示运行的容器</span><br><span class="line">docker ps</span><br></pre></td></tr></table></figure>
+
+<p><img src="/vulhub/%E6%9F%A5%E7%9C%8Bdocker%E5%90%84%E9%A1%B9%E5%9F%BA%E6%9C%AC%E4%BF%A1%E6%81%AF.png"></p>
+<h2 id="6-安装pip-3"><a href="#6-安装pip-3" class="headerlink" title="6.安装pip-3"></a>6.安装pip-3</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">apt-get install python3-pip </span><br></pre></td></tr></table></figure>
+
+<h2 id="7-安装Docker-Compose"><a href="#7-安装Docker-Compose" class="headerlink" title="7.安装Docker-Compose"></a>7.安装Docker-Compose</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pip3 install docker-compose</span><br></pre></td></tr></table></figure>
+
+<p>6和7两步因为已经安装好了，图片没什么参考价值，输入安装命令后直接进行安装即可</p>
+<h2 id="8-查看docker-compose版本"><a href="#8-查看docker-compose版本" class="headerlink" title="8.查看docker-compose版本"></a>8.查看docker-compose版本</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker-compose -v</span><br></pre></td></tr></table></figure>
+
+<p><img src="/vulhub/vulhub%E6%9F%A5%E7%9C%8Bdocker-compose%E7%89%88%E6%9C%AC.png"></p>
+<h2 id="9-安装vulhub靶场"><a href="#9-安装vulhub靶场" class="headerlink" title="9.安装vulhub靶场"></a>9.安装vulhub靶场</h2><p><strong>注意：是进入的~目录下面，进入之后进行如下命令执行（这里只是本人将其放在该目录下面，也可自行选择）</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">git clone https://gitee.com/puier/vulhub.git</span><br></pre></td></tr></table></figure>
+
+<p><img src="/vulhub/vulhub%E4%B8%8B%E8%BD%BD%E9%95%9C%E5%83%8F.png"></p>
+<h2 id="10-随便进入一个靶场目录"><a href="#10-随便进入一个靶场目录" class="headerlink" title="10.随便进入一个靶场目录"></a>10.随便进入一个靶场目录</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd /root/vulhub/weblogic/CVE-2017-10271</span><br></pre></td></tr></table></figure>
+
+<p><strong>注意：这里如果前面所下载的目录不是用户目录，就自行更改路径</strong></p>
+<p><img src="/vulhub/vulhub%E8%BF%9B%E5%85%A5%E9%9D%B6%E5%9C%BA%E7%9B%AE%E5%BD%95.png"></p>
+<p>也可进入root&#x2F;vulhub&#x2F;weblogic之后执行如下命令进入靶场（以CVE-2017-10271为例）：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd CVE-2017-10271</span><br></pre></td></tr></table></figure>
+
+<h2 id="11-对靶场进行编译"><a href="#11-对靶场进行编译" class="headerlink" title="11.对靶场进行编译"></a>11.对靶场进行编译</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker-compose build</span><br></pre></td></tr></table></figure>
+
+<p><img src="/vulhub/vulhub%E7%BC%96%E8%AF%91%E9%9D%B6%E5%9C%BA%E7%8E%AF%E5%A2%83.png"></p>
+<h2 id="12-运行此靶场"><a href="#12-运行此靶场" class="headerlink" title="12.运行此靶场"></a>12.运行此靶场</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker-compose up -d</span><br></pre></td></tr></table></figure>
+
+<p><img src="/vulhub/vulhub%E8%BF%90%E8%A1%8C%E9%9D%B6%E5%9C%BA.png"></p>
+<h2 id="13-查看启动环境"><a href="#13-查看启动环境" class="headerlink" title="13.查看启动环境"></a>13.查看启动环境</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker-compose ps -a</span><br></pre></td></tr></table></figure>
+
+<p><img src="/vulhub/vulhub%E6%9F%A5%E7%9C%8B%E5%90%AF%E5%8A%A8%E7%8E%AF%E5%A2%83.png"></p>
+<p>就表示是在虚拟机域名下的7001端口（虚拟机域名直接ifconfig即可）</p>
+<h2 id="14-通过浏览器进行访问"><a href="#14-通过浏览器进行访问" class="headerlink" title="14.通过浏览器进行访问"></a>14.通过浏览器进行访问</h2><p><img src="/vulhub/vulhub%E6%B5%8F%E8%A7%88%E5%99%A8%E8%AE%BF%E9%97%AE.png"></p>
+<p><strong>注意：本题页面就是404，并不是无法访问的意思</strong></p>
+<h2 id="15-关闭此靶场环境"><a href="#15-关闭此靶场环境" class="headerlink" title="15.关闭此靶场环境"></a>15.关闭此靶场环境</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker-compose down</span><br></pre></td></tr></table></figure>
+
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>后续再想打开靶场，只需要重复10-14步即可</p>
+]]></content>
+  </entry>
+  <entry>
     <title>redis未授权</title>
     <url>/2023/06/09/redis%E6%9C%AA%E6%8E%88%E6%9D%83/</url>
     <content><![CDATA[<h1 id="redis未授权"><a href="#redis未授权" class="headerlink" title="redis未授权"></a>redis未授权</h1><h2 id="什么是redis"><a href="#什么是redis" class="headerlink" title="什么是redis"></a>什么是redis</h2><p>Redis是现在最受欢迎的NoSQL数据库之一，Redis是一个使用ANSI C编写的开源、包含多种数据结构、支持网络、基于内存、可选持久性的键值对存储数据库，其具备如下特性：</p>
@@ -108,7 +163,7 @@
 <p>在这里输入你自己生成的私钥即可</p>
 <p><strong>注意：</strong></p>
 <p><strong>1.如果你是linux系统使用cat,是windows系统使用type.</strong></p>
-<p><strong>2.如果你是windows那你利用ssh密钥连接运行ssh -i id_rsa <a href="mailto:&#114;&#x6f;&#111;&#x74;&#x40;&#x31;&#57;&#50;&#x2e;&#x31;&#54;&#56;&#46;&#x34;&#x33;&#x2e;&#x31;&#52;&#x31;">&#114;&#x6f;&#111;&#x74;&#x40;&#x31;&#57;&#50;&#x2e;&#x31;&#54;&#56;&#46;&#x34;&#x33;&#x2e;&#x31;&#52;&#x31;</a>需要在.ssh目录下，因为权限问题。</strong></p>
+<p><strong>2.如果你是windows那你利用ssh密钥连接运行ssh -i id_rsa <a href="mailto:&#114;&#111;&#x6f;&#x74;&#64;&#x31;&#57;&#x32;&#46;&#x31;&#54;&#x38;&#46;&#52;&#x33;&#46;&#x31;&#x34;&#x31;">&#114;&#111;&#x6f;&#x74;&#64;&#x31;&#57;&#x32;&#46;&#x31;&#54;&#x38;&#46;&#52;&#x33;&#46;&#x31;&#x34;&#x31;</a>需要在.ssh目录下，因为权限问题。</strong></p>
 <p><strong>3.你利用redis上传公钥时候运行代码是在你解压的redis文件下运行。</strong></p>
 <p><strong>4.文件名必须是authorized_keys,由配置文件决定的。</strong></p>
 <h3 id="利用crontab反弹shell"><a href="#利用crontab反弹shell" class="headerlink" title="利用crontab反弹shell"></a>利用crontab反弹shell</h3><h4 id="什么是crontab"><a href="#什么是crontab" class="headerlink" title="什么是crontab"></a>什么是crontab</h4><p>crontab 是一个在类 Unix 系统中定时执行任务的命令，它允许用户在指定的时间点或时间间隔内运行命令或脚本。通常情况下，crontab 命令用于自动化重复性任务，如备份、数据同步、清理日志等。</p>
@@ -164,61 +219,6 @@
 <p>如果反弹shell就需要监听端口</p>
 <p><img src="/redis/%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%8F%8D%E5%BC%B9shell2.png"></p>
 <p>注意：如果redis需要密码，可以加-a参数。</p>
-]]></content>
-  </entry>
-  <entry>
-    <title>vulhub搭建</title>
-    <url>/2023/06/02/vulhub%E6%90%AD%E5%BB%BA/</url>
-    <content><![CDATA[<h1 id="vulhub靶场搭建及使用"><a href="#vulhub靶场搭建及使用" class="headerlink" title="vulhub靶场搭建及使用"></a>vulhub靶场搭建及使用</h1><h2 id="1-进行系统更新"><a href="#1-进行系统更新" class="headerlink" title="1.进行系统更新"></a>1.进行系统更新</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sudo su			             进入超级用户</span><br><span class="line">apt-get update                更新系统，防止后面安装时报错</span><br><span class="line">apt-get upgrade               更新软件包</span><br><span class="line">apt-get dist-upgrade          更新系统版本。如果你对新版本软件的需求不是那么迫切，可以不执行</span><br></pre></td></tr></table></figure>
-
-<p>这几步几乎每次都会用，很常见，就不放图片了</p>
-<h2 id="2-安装https协议及AC证书"><a href="#2-安装https协议及AC证书" class="headerlink" title="2.安装https协议及AC证书"></a>2.安装https协议及AC证书</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">apt-get install -y apt-transport-https ca-certificates</span><br></pre></td></tr></table></figure>
-
-<p><img src="/vulhub/vulhub%E5%AE%89%E8%A3%85%E8%AF%81%E4%B9%A6.png"></p>
-<h2 id="3-下载安装docker"><a href="#3-下载安装docker" class="headerlink" title="3.下载安装docker"></a>3.下载安装docker</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">apt install docker.io</span><br></pre></td></tr></table></figure>
-
-<p><img src="/vulhub/vulhub%E5%AE%89%E8%A3%85docker.png"></p>
-<h2 id="4-查看docker安装是否成功"><a href="#4-查看docker安装是否成功" class="headerlink" title="4.查看docker安装是否成功"></a>4.查看docker安装是否成功</h2><p>Docker自带一个hello-world环境，我们可以启动这个环境，测试docker功能是否正常</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker run hello-world </span><br></pre></td></tr></table></figure>
-
-<p><img src="/vulhub/vulhub%E9%AA%8C%E8%AF%81docker%E6%98%AF%E5%90%A6%E5%AE%89%E8%A3%85%E6%88%90%E5%8A%9F.png"></p>
-<h2 id="5-查看docker的各项基本信息"><a href="#5-查看docker的各项基本信息" class="headerlink" title="5.查看docker的各项基本信息"></a>5.查看docker的各项基本信息</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#查看Docker版本</span><br><span class="line">docker -v </span><br><span class="line">#启动docker环境</span><br><span class="line">systemctl start docker</span><br><span class="line">#显示所有的容器，包括未运行的容器</span><br><span class="line">docker ps -a</span><br><span class="line">#显示运行的容器</span><br><span class="line">docker ps</span><br></pre></td></tr></table></figure>
-
-<p><img src="/vulhub/%E6%9F%A5%E7%9C%8Bdocker%E5%90%84%E9%A1%B9%E5%9F%BA%E6%9C%AC%E4%BF%A1%E6%81%AF.png"></p>
-<h2 id="6-安装pip-3"><a href="#6-安装pip-3" class="headerlink" title="6.安装pip-3"></a>6.安装pip-3</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">apt-get install python3-pip </span><br></pre></td></tr></table></figure>
-
-<h2 id="7-安装Docker-Compose"><a href="#7-安装Docker-Compose" class="headerlink" title="7.安装Docker-Compose"></a>7.安装Docker-Compose</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pip3 install docker-compose</span><br></pre></td></tr></table></figure>
-
-<p>6和7两步因为已经安装好了，图片没什么参考价值，输入安装命令后直接进行安装即可</p>
-<h2 id="8-查看docker-compose版本"><a href="#8-查看docker-compose版本" class="headerlink" title="8.查看docker-compose版本"></a>8.查看docker-compose版本</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker-compose -v</span><br></pre></td></tr></table></figure>
-
-<p><img src="/vulhub/vulhub%E6%9F%A5%E7%9C%8Bdocker-compose%E7%89%88%E6%9C%AC.png"></p>
-<h2 id="9-安装vulhub靶场"><a href="#9-安装vulhub靶场" class="headerlink" title="9.安装vulhub靶场"></a>9.安装vulhub靶场</h2><p><strong>注意：是进入的~目录下面，进入之后进行如下命令执行（这里只是本人将其放在该目录下面，也可自行选择）</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">git clone https://gitee.com/puier/vulhub.git</span><br></pre></td></tr></table></figure>
-
-<p><img src="/vulhub/vulhub%E4%B8%8B%E8%BD%BD%E9%95%9C%E5%83%8F.png"></p>
-<h2 id="10-随便进入一个靶场目录"><a href="#10-随便进入一个靶场目录" class="headerlink" title="10.随便进入一个靶场目录"></a>10.随便进入一个靶场目录</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd /root/vulhub/weblogic/CVE-2017-10271</span><br></pre></td></tr></table></figure>
-
-<p><strong>注意：这里如果前面所下载的目录不是用户目录，就自行更改路径</strong></p>
-<p><img src="/vulhub/vulhub%E8%BF%9B%E5%85%A5%E9%9D%B6%E5%9C%BA%E7%9B%AE%E5%BD%95.png"></p>
-<p>也可进入root&#x2F;vulhub&#x2F;weblogic之后执行如下命令进入靶场（以CVE-2017-10271为例）：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd CVE-2017-10271</span><br></pre></td></tr></table></figure>
-
-<h2 id="11-对靶场进行编译"><a href="#11-对靶场进行编译" class="headerlink" title="11.对靶场进行编译"></a>11.对靶场进行编译</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker-compose build</span><br></pre></td></tr></table></figure>
-
-<p><img src="/vulhub/vulhub%E7%BC%96%E8%AF%91%E9%9D%B6%E5%9C%BA%E7%8E%AF%E5%A2%83.png"></p>
-<h2 id="12-运行此靶场"><a href="#12-运行此靶场" class="headerlink" title="12.运行此靶场"></a>12.运行此靶场</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker-compose up -d</span><br></pre></td></tr></table></figure>
-
-<p><img src="/vulhub/vulhub%E8%BF%90%E8%A1%8C%E9%9D%B6%E5%9C%BA.png"></p>
-<h2 id="13-查看启动环境"><a href="#13-查看启动环境" class="headerlink" title="13.查看启动环境"></a>13.查看启动环境</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker-compose ps -a</span><br></pre></td></tr></table></figure>
-
-<p><img src="/vulhub/vulhub%E6%9F%A5%E7%9C%8B%E5%90%AF%E5%8A%A8%E7%8E%AF%E5%A2%83.png"></p>
-<p>就表示是在虚拟机域名下的7001端口（虚拟机域名直接ifconfig即可）</p>
-<h2 id="14-通过浏览器进行访问"><a href="#14-通过浏览器进行访问" class="headerlink" title="14.通过浏览器进行访问"></a>14.通过浏览器进行访问</h2><p><img src="/vulhub/vulhub%E6%B5%8F%E8%A7%88%E5%99%A8%E8%AE%BF%E9%97%AE.png"></p>
-<p><strong>注意：本题页面就是404，并不是无法访问的意思</strong></p>
-<h2 id="15-关闭此靶场环境"><a href="#15-关闭此靶场环境" class="headerlink" title="15.关闭此靶场环境"></a>15.关闭此靶场环境</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker-compose down</span><br></pre></td></tr></table></figure>
-
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>后续再想打开靶场，只需要重复10-14步即可</p>
 ]]></content>
   </entry>
   <entry>
