@@ -519,8 +519,7 @@
   <entry>
     <title>DC1-2靶机复现</title>
     <url>/2023/07/24/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/</url>
-    <content><![CDATA[<h1 id="DC1-2靶机复现"><a href="#DC1-2靶机复现" class="headerlink" title="DC1-2靶机复现"></a>DC1-2靶机复现</h1><h2 id="DC-1"><a href="#DC-1" class="headerlink" title="DC-1"></a>DC-1</h2><h3 id="flag1——msfconsole使用"><a href="#flag1——msfconsole使用" class="headerlink" title="flag1——msfconsole使用"></a>flag1——msfconsole使用</h3><img src="/2023/07/24/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-1靶机破解.png" style="zoom:150%;">
-
+    <content><![CDATA[<h1 id="DC1-2靶机复现"><a href="#DC1-2靶机复现" class="headerlink" title="DC1-2靶机复现"></a>DC1-2靶机复现</h1><h2 id="DC-1"><a href="#DC-1" class="headerlink" title="DC-1"></a>DC-1</h2><h3 id="flag1——msfconsole使用"><a href="#flag1——msfconsole使用" class="headerlink" title="flag1——msfconsole使用"></a>flag1——msfconsole使用</h3><p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A3-169020383324453.png"></p>
 <p>先用nmap扫描以下（这里是将DC-1靶机和kali都开启并使用NAT连接的情况下并且知道了DC-1靶机的ip域名），同时我们也知道了靶机所开放的端口</p>
 <p>尝试访问</p>
 <p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A32.png"></p>
@@ -779,7 +778,7 @@
 <p>发现有git可以直接切换到root权限</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd</span><br><span class="line">sudo git help config</span><br><span class="line">!/bin/bash               //在末行模式输入</span><br></pre></td></tr></table></figure>
 
-<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A325-169010424697916.png"></p>
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A325.png"></p>
 <p>可以看到，成功拿到了root权限，但是我们的目录退到了jerry目录下，再次cd</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd</span><br><span class="line">ls</span><br><span class="line">cat final-flag.txt</span><br></pre></td></tr></table></figure>
 
