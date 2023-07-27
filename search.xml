@@ -798,7 +798,7 @@
 <p>会进行取整，直接进行数组绕过</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">a[]=1</span><br></pre></td></tr></table></figure>
 
-<p>![](shuaNSSCTF.assets&#x2F;[NSSCTF 2022 Spring Recruit]babyphp解题截图.png)</p>
+<p>![](shuaNSSCTF.assets&#x2F;&#x2F;[NSSCTF 2022 Spring Recruit]babyphp解题截图.png)</p>
 <p>可以看到成功绕过</p>
 <p>第二个和第三个if</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">if(isset($_POST[&#x27;b1&#x27;])&amp;&amp;$_POST[&#x27;b2&#x27;])</span><br><span class="line">if($_POST[&#x27;b1&#x27;]!=$_POST[&#x27;b2&#x27;]&amp;&amp;md5($_POST[&#x27;b1&#x27;])===md5($_POST[&#x27;b2&#x27;]))</span><br></pre></td></tr></table></figure>
