@@ -798,7 +798,7 @@
 <p>会进行取整，直接进行数组绕过</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">a[]=1</span><br></pre></td></tr></table></figure>
 
-<img src="[NSSCTF 2022 Spring Recruit]babyphp解题截图.png" style="zoom:150%;">
+<img src="[NSSCTF 2022 Spring Recruit]babyphp解题截图.png">
 
 <p>可以看到成功绕过</p>
 <p>第二个和第三个if</p>
