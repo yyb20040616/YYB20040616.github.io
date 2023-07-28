@@ -213,7 +213,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2023-07-28 10:34:07 / 修改时间：10:46:05" itemprop="dateCreated datePublished" datetime="2023-07-28T10:34:07+08:00">2023-07-28</time>
+      <time title="创建时间：2023-07-28 10:34:07 / 修改时间：10:57:35" itemprop="dateCreated datePublished" datetime="2023-07-28T10:34:07+08:00">2023-07-28</time>
     </span>
 
   
@@ -251,8 +251,7 @@
 <p>会进行取整，直接进行数组绕过</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">a[]=1</span><br></pre></td></tr></table></figure>
 
-<img src="[NSSCTF 2022 Spring Recruit]babyphp解题截图.png">
-
+<p><img src="/NSSCTF%E5%88%B7%E9%A2%98/%5BNSSCTF%202022%20Spring%20Recruit%5Dbabyphp%E8%A7%A3%E9%A2%98%E6%88%AA%E5%9B%BE-16905130383142.png"></p>
 <p>可以看到成功绕过</p>
 <p>第二个和第三个if</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">if(isset($_POST[&#x27;b1&#x27;])&amp;&amp;$_POST[&#x27;b2&#x27;])</span><br><span class="line">if($_POST[&#x27;b1&#x27;]!=$_POST[&#x27;b2&#x27;]&amp;&amp;md5($_POST[&#x27;b1&#x27;])===md5($_POST[&#x27;b2&#x27;]))</span><br></pre></td></tr></table></figure>
@@ -261,7 +260,7 @@
 <p>直接用数组进行绕过即可</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">b1[]=2&amp;b2[]=3</span><br></pre></td></tr></table></figure>
 
-<p>![](NSSCTF刷题.assets&#x2F;[NSSCTF 2022 Spring Recruit]babyphp解题截图2.png)</p>
+<p>![](NSSCTF&#x2F;[NSSCTF 2022 Spring Recruit]babyphp解题截图2.png)</p>
 <p>成功绕过</p>
 <p>最后一个if</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">if($_POST[&#x27;c1&#x27;]!=$_POST[&#x27;c2&#x27;]&amp;&amp;is_string($_POST[&#x27;c1&#x27;])&amp;&amp;is_string($_POST[&#x27;c2&#x27;])&amp;&amp;md5($_POST[&#x27;c1&#x27;])==md5($_POST[&#x27;c2&#x27;]))</span><br></pre></td></tr></table></figure>
