@@ -816,20 +816,20 @@
 <p>直接使用0e开头的科学计数法就可以了</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">c1=s878926199a&amp;c2=s155964671a</span><br></pre></td></tr></table></figure>
 
-<p>![](NSSCTF刷题.assets&#x2F;[NSSCTF 2022 Spring Recruit]babyphp解题截图3.png)</p>
+<p>![](NSSCTF&#x2F;[NSSCTF 2022 Spring Recruit]babyphp解题截图3.png)</p>
 <p>直接就拿到了flag</p>
-<h2 id="GXYCTF-2019-BabyUpload"><a href="#GXYCTF-2019-BabyUpload" class="headerlink" title="[GXYCTF 2019]BabyUpload"></a>[GXYCTF 2019]BabyUpload</h2><p>![](NSSCTF刷题.assets&#x2F;[GXYCTF 2019]BabyUpload题目截图.png)</p>
+<h2 id="GXYCTF-2019-BabyUpload"><a href="#GXYCTF-2019-BabyUpload" class="headerlink" title="[GXYCTF 2019]BabyUpload"></a>[GXYCTF 2019]BabyUpload</h2><p>![](NSSCTF&#x2F;[GXYCTF 2019]BabyUpload题目截图.png)</p>
 <p>题目就是一个文件上传的界面，nss标签提醒了是MIME验证并且要用到.htaccess文件，当我们尝试上传php文件时发现回显是不能上传后缀名为ph的文件，所以抓包改后缀，同时要改Content-type</p>
 <p>先抓包上传.htaccess文件，文件内容为</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;FilesMatch  &quot;wen&quot;&gt;</span><br><span class="line"></span><br><span class="line">SetHandler  application/x-httpd-php</span><br><span class="line"></span><br><span class="line">&lt;/FilesMatch&gt;</span><br></pre></td></tr></table></figure>
 
-<p>![](NSSCTF刷题.assets&#x2F;[GXYCTF 2019]BabyUpload解题截图.png)</p>
+<p>![](NSSCTF&#x2F;[GXYCTF 2019]BabyUpload解题截图.png)</p>
 <p>发现上传成功，下一步就是上传后缀名为wen的真正的木马文件，注意也要改content-type</p>
-<p>![](NSSCTF刷题.assets&#x2F;[GXYCTF 2019]BabyUpload解题截图2.png)</p>
+<p>![](NSSCTF&#x2F;[GXYCTF 2019]BabyUpload解题截图2.png)</p>
 <p>发现又上传成功，接下来将路径复制下来加在题目地址后面就行，用hackbar执行命令即可</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">upload/993203c1a20fe34d2fc406badd31d804/muma2.wen</span><br></pre></td></tr></table></figure>
 
-<p>![](NSSCTF刷题.assets&#x2F;[GXYCTF 2019]BabyUpload解题截图3.png)</p>
+<p>![](NSSCTF&#x2F;[GXYCTF 2019]BabyUpload解题截图3.png)</p>
 <p>成功拿到flag。</p>
 <h2 id="GDOUCTF-2023-EZ-WEB"><a href="#GDOUCTF-2023-EZ-WEB" class="headerlink" title="[GDOUCTF 2023]EZ WEB"></a>[GDOUCTF 2023]EZ WEB</h2><p>题目一进去就只有一个按键，并且点击之后只出来一个弹窗就没反应了，所以按F12看看</p>
 <p>![](NSSCTF刷题.assets&#x2F;[GDOUCTF 2023]EZ WEB解题截图.png)</p>
